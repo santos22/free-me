@@ -8,7 +8,7 @@ Template["yakPage"] = new Template("Template.yakPage", (function() {
     "class": "container"
   }, "\n      ", Spacebars.include(view.lookupTemplate("yakItem")), "\n      ", HTML.DIV({
     "class": "comment"
-  }, "\n        ", HTML.Raw("<h4>Comments</h4>"), "\n        ", Blaze.Each(function() {
+  }, "\n        ", HTML.Raw("<h4>Comments</h4>"), "\n        ", HTML.Raw("<hr>"), "\n        ", Blaze.Each(function() {
     return Spacebars.call(view.lookup("comments"));
   }, function() {
     return [ "\n          ", Spacebars.include(view.lookupTemplate("commentItem")), "\n        " ];

@@ -15,7 +15,14 @@ Template["accounts"] = new Template("Template.accounts", (function() {
       "class": "list-group-item"
     }, "\n        ", HTML.DIV({
       "class": "pagination-centered"
-    }, "\n          ", HTML.H2("Please login to do this"), "\n          ", HTML.DIV({
+    }, "\n\n        ", HTML.DIV({
+      "class": "alert alert-danger"
+    }, "\n          ", HTML.A({
+      href: "#",
+      "class": "close",
+      "data-dismiss": "alert",
+      "aria-label": "close"
+    }, "×"), "\n          ", HTML.STRONG("Login!"), " Please sign in with Facebook to be able to vote."), "\n          ", HTML.DIV({
       "class": "btn"
     }, "\n            ", Spacebars.include(view.lookupTemplate("loginButtons")), "\n          "), "\n        "), "\n      "), "\n    "), "\n  "), "\n  " ];
   });

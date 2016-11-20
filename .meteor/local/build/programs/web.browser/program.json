@@ -641,9 +641,9 @@
       "where": "client",
       "type": "js",
       "cacheable": true,
-      "url": "/client/template.accounts.js?67a8e7ac5d8d8e37fe251c56b4a9afc72480fb87",
-      "size": 872,
-      "hash": "67a8e7ac5d8d8e37fe251c56b4a9afc72480fb87"
+      "url": "/client/template.accounts.js?157c5e8b3b4f2c0057af2b71de64331233ea6936",
+      "size": 1122,
+      "hash": "157c5e8b3b4f2c0057af2b71de64331233ea6936"
     },
     {
       "path": "app/client/template.comment_item.js",
@@ -659,9 +659,9 @@
       "where": "client",
       "type": "js",
       "cacheable": true,
-      "url": "/client/template.comment_submit.js?f26434ec5b61e226288e92ae7531e34e7cf2b49d",
-      "size": 481,
-      "hash": "f26434ec5b61e226288e92ae7531e34e7cf2b49d"
+      "url": "/client/template.comment_submit.js?7139b91fe73370736b17eedcf3a3dc231b3384a4",
+      "size": 496,
+      "hash": "7139b91fe73370736b17eedcf3a3dc231b3384a4"
     },
     {
       "path": "app/client/template.yak_item.js",
@@ -677,36 +677,36 @@
       "where": "client",
       "type": "js",
       "cacheable": true,
-      "url": "/client/template.yak_page.js?83e09abecaf63adf5151a09eebdab00af68cc7e5",
-      "size": 724,
-      "hash": "83e09abecaf63adf5151a09eebdab00af68cc7e5"
+      "url": "/client/template.yak_page.js?e1023856a1879802925f67bbb8a7a645121ea059",
+      "size": 756,
+      "hash": "e1023856a1879802925f67bbb8a7a645121ea059"
     },
     {
       "path": "app/client/template.yak_submit.js",
       "where": "client",
       "type": "js",
       "cacheable": true,
-      "url": "/client/template.yak_submit.js?e8d56006ae42b17bd13a85c416fd2f4050fb4ba2",
-      "size": 1046,
-      "hash": "e8d56006ae42b17bd13a85c416fd2f4050fb4ba2"
+      "url": "/client/template.yak_submit.js?dec4eb02c6458f75a89fd56f24eaecb48c47777e",
+      "size": 1085,
+      "hash": "dec4eb02c6458f75a89fd56f24eaecb48c47777e"
     },
     {
       "path": "app/client/template.yaks_list.js",
       "where": "client",
       "type": "js",
       "cacheable": true,
-      "url": "/client/template.yaks_list.js?4aacab6f8fceade384ba275f710d067973786cd2",
-      "size": 689,
-      "hash": "4aacab6f8fceade384ba275f710d067973786cd2"
+      "url": "/client/template.yaks_list.js?4695f0c5c82194724a2954ae135370bbcf907022",
+      "size": 614,
+      "hash": "4695f0c5c82194724a2954ae135370bbcf907022"
     },
     {
       "path": "app/client/template.main.js",
       "where": "client",
       "type": "js",
       "cacheable": true,
-      "url": "/client/template.main.js?be281f70ecdbb8fa2440df0ca55c9ae9b70589bf",
-      "size": 429,
-      "hash": "be281f70ecdbb8fa2440df0ca55c9ae9b70589bf"
+      "url": "/client/template.main.js?b81917796b9de0f6e393d43a36c95e02b95bc18f",
+      "size": 530,
+      "hash": "b81917796b9de0f6e393d43a36c95e02b95bc18f"
     },
     {
       "path": "app/client/client.js",
@@ -763,15 +763,15 @@
       "hash": "0f48c5fd2b8dedd6149b4fe037c833a34d6f8ef5"
     },
     {
-      "path": "f7760b2807ce7a036b50c4db0d7fbfee6c569cb8.css",
+      "path": "29d53e220791b03451edba012491c88b6e10e402.css",
       "where": "client",
       "type": "css",
       "cacheable": true,
-      "url": "/f7760b2807ce7a036b50c4db0d7fbfee6c569cb8.css",
-      "sourceMap": "f7760b2807ce7a036b50c4db0d7fbfee6c569cb8.css.map",
-      "sourceMapUrl": "/f7760b2807ce7a036b50c4db0d7fbfee6c569cb8.map",
-      "size": 284680,
-      "hash": "f7760b2807ce7a036b50c4db0d7fbfee6c569cb8"
+      "url": "/29d53e220791b03451edba012491c88b6e10e402.css",
+      "sourceMap": "29d53e220791b03451edba012491c88b6e10e402.css.map",
+      "sourceMapUrl": "/29d53e220791b03451edba012491c88b6e10e402.map",
+      "size": 311055,
+      "hash": "29d53e220791b03451edba012491c88b6e10e402"
     },
     {
       "path": "packages/twbs_bootstrap/dist/fonts/glyphicons-halflings-regular.eot",
