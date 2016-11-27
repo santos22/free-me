@@ -18,5 +18,4 @@
     e.target.body.value = "";
   }
 });
-
-})();
+}).call(this);

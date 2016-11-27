@@ -2,15 +2,8 @@
 //                                                                      //
 // This is a generated file. You can view the original                  //
 // source in your browser if your browser supports source maps.         //
-//                                                                      //
-// If you are using Chrome, open the Developer Tools and click the gear //
-// icon in its lower right corner. In the General Settings panel, turn  //
-// on 'Enable source maps'.                                             //
-//                                                                      //
-// If you are using Firefox 23, go to `about:config` and set the        //
-// `devtools.debugger.source-maps-enabled` preference to true.          //
-// (The preference should be on by default in Firefox 24; versions      //
-// older than 23 do not support source maps.)                           //
+// Source maps are supported by all recent versions of Chrome, Safari,  //
+// and Firefox, and by Internet Explorer 11.                            //
 //                                                                      //
 //////////////////////////////////////////////////////////////////////////
 
@@ -19,9 +12,11 @@
 
 /* Imports */
 var Meteor = Package.meteor.Meteor;
+var global = Package.meteor.global;
+var meteorEnv = Package.meteor.meteorEnv;
 var Random = Package.random.Random;
 
-(function () {
+(function(){
 
 //////////////////////////////////////////////////////////////////////////////////////
 //                                                                                  //
@@ -34,7 +29,7 @@ var Random = Package.random.Random;
 // Let's test to make sure that localStorage actually works. For example, in        // 3
 // Safari with private browsing on, window.localStorage exists but actually         // 4
 // trying to use it throws.                                                         // 5
-// Accessing window.localStorage can also immediately throw an error in IE (#1291). // 6
+// Accessing window.localStorage can also immediately throw an error in IE (#1291).
                                                                                     // 7
 var key = '_localstorage_test_' + Random.id();                                      // 8
 var retrieved;                                                                      // 9

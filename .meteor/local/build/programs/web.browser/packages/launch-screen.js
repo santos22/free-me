@@ -2,15 +2,8 @@
 //                                                                      //
 // This is a generated file. You can view the original                  //
 // source in your browser if your browser supports source maps.         //
-//                                                                      //
-// If you are using Chrome, open the Developer Tools and click the gear //
-// icon in its lower right corner. In the General Settings panel, turn  //
-// on 'Enable source maps'.                                             //
-//                                                                      //
-// If you are using Firefox 23, go to `about:config` and set the        //
-// `devtools.debugger.source-maps-enabled` preference to true.          //
-// (The preference should be on by default in Firefox 24; versions      //
-// older than 23 do not support source maps.)                           //
+// Source maps are supported by all recent versions of Chrome, Safari,  //
+// and Firefox, and by Internet Explorer 11.                            //
 //                                                                      //
 //////////////////////////////////////////////////////////////////////////
 
@@ -19,11 +12,13 @@
 
 /* Imports */
 var Meteor = Package.meteor.Meteor;
+var global = Package.meteor.global;
+var meteorEnv = Package.meteor.meteorEnv;
 
 /* Package-scope variables */
 var LaunchScreen;
 
-(function () {
+(function(){
 
 ////////////////////////////////////////////////////////////////////////////
 //                                                                        //
@@ -57,22 +52,23 @@ LaunchScreen = {                                                          // 7
         return;                                                           // 24
                                                                           // 25
       if (! released) {                                                   // 26
-        holdCount--;                                                      // 27
-        if (holdCount === 0 &&                                            // 28
-            typeof navigator !== 'undefined' && navigator.splashscreen) { // 29
-          alreadyHidden = true;                                           // 30
-          navigator.splashscreen.hide();                                  // 31
-        }                                                                 // 32
-      }                                                                   // 33
-    };                                                                    // 34
-                                                                          // 35
-    // Returns a launch screen handle with a release method               // 36
-    return {                                                              // 37
-      release: release                                                    // 38
-    };                                                                    // 39
-  }                                                                       // 40
-};                                                                        // 41
-                                                                          // 42
+        released = true;                                                  // 27
+        holdCount--;                                                      // 28
+        if (holdCount === 0 &&                                            // 29
+            typeof navigator !== 'undefined' && navigator.splashscreen) {
+          alreadyHidden = true;                                           // 31
+          navigator.splashscreen.hide();                                  // 32
+        }                                                                 // 33
+      }                                                                   // 34
+    };                                                                    // 35
+                                                                          // 36
+    // Returns a launch screen handle with a release method               // 37
+    return {                                                              // 38
+      release: release                                                    // 39
+    };                                                                    // 40
+  }                                                                       // 41
+};                                                                        // 42
+                                                                          // 43
 ////////////////////////////////////////////////////////////////////////////
 
 }).call(this);
@@ -82,7 +78,7 @@ LaunchScreen = {                                                          // 7
 
 
 
-(function () {
+(function(){
 
 ////////////////////////////////////////////////////////////////////////////
 //                                                                        //
@@ -132,8 +128,11 @@ Meteor.startup(function () {                                              // 9
 
 /* Exports */
 if (typeof Package === 'undefined') Package = {};
-Package['launch-screen'] = {
+(function (pkg, symbols) {
+  for (var s in symbols)
+    (s in pkg) || (pkg[s] = symbols[s]);
+})(Package['launch-screen'] = {}, {
   LaunchScreen: LaunchScreen
-};
+});
 
 })();

@@ -2,15 +2,8 @@
 //                                                                      //
 // This is a generated file. You can view the original                  //
 // source in your browser if your browser supports source maps.         //
-//                                                                      //
-// If you are using Chrome, open the Developer Tools and click the gear //
-// icon in its lower right corner. In the General Settings panel, turn  //
-// on 'Enable source maps'.                                             //
-//                                                                      //
-// If you are using Firefox 23, go to `about:config` and set the        //
-// `devtools.debugger.source-maps-enabled` preference to true.          //
-// (The preference should be on by default in Firefox 24; versions      //
-// older than 23 do not support source maps.)                           //
+// Source maps are supported by all recent versions of Chrome, Safari,  //
+// and Firefox, and by Internet Explorer 11.                            //
 //                                                                      //
 //////////////////////////////////////////////////////////////////////////
 
@@ -19,6 +12,8 @@
 
 /* Imports */
 var Meteor = Package.meteor.Meteor;
+var global = Package.meteor.global;
+var meteorEnv = Package.meteor.meteorEnv;
 var _ = Package.underscore._;
 var ReactiveDict = Package['reactive-dict'].ReactiveDict;
 var EJSON = Package.ejson.EJSON;
@@ -26,7 +21,7 @@ var EJSON = Package.ejson.EJSON;
 /* Package-scope variables */
 var Session;
 
-(function () {
+(function(){
 
 /////////////////////////////////////////////////////////////////////////////////
 //                                                                             //
@@ -42,7 +37,7 @@ Session = new ReactiveDict('session');                                         /
 /**                                                                            // 6
  * @memberOf Session                                                           // 7
  * @method set                                                                 // 8
- * @summary Set a variable in the session. Notify any listeners that the value // 9
+ * @summary Set a variable in the session. Notify any listeners that the value
  * has changed (eg: redraw templates, and rerun any                            // 10
  * [`Tracker.autorun`](#tracker_autorun) computations, that called             // 11
  * [`Session.get`](#session_get) on this `key`.)                               // 12
@@ -93,8 +88,11 @@ Session = new ReactiveDict('session');                                         /
 
 /* Exports */
 if (typeof Package === 'undefined') Package = {};
-Package.session = {
+(function (pkg, symbols) {
+  for (var s in symbols)
+    (s in pkg) || (pkg[s] = symbols[s]);
+})(Package.session = {}, {
   Session: Session
-};
+});
 
 })();

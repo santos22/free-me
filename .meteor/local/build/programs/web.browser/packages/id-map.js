@@ -2,15 +2,8 @@
 //                                                                      //
 // This is a generated file. You can view the original                  //
 // source in your browser if your browser supports source maps.         //
-//                                                                      //
-// If you are using Chrome, open the Developer Tools and click the gear //
-// icon in its lower right corner. In the General Settings panel, turn  //
-// on 'Enable source maps'.                                             //
-//                                                                      //
-// If you are using Firefox 23, go to `about:config` and set the        //
-// `devtools.debugger.source-maps-enabled` preference to true.          //
-// (The preference should be on by default in Firefox 24; versions      //
-// older than 23 do not support source maps.)                           //
+// Source maps are supported by all recent versions of Chrome, Safari,  //
+// and Firefox, and by Internet Explorer 11.                            //
 //                                                                      //
 //////////////////////////////////////////////////////////////////////////
 
@@ -19,14 +12,15 @@
 
 /* Imports */
 var Meteor = Package.meteor.Meteor;
+var global = Package.meteor.global;
+var meteorEnv = Package.meteor.meteorEnv;
 var _ = Package.underscore._;
-var JSON = Package.json.JSON;
 var EJSON = Package.ejson.EJSON;
 
 /* Package-scope variables */
 var IdMap;
 
-(function () {
+(function(){
 
 ////////////////////////////////////////////////////////////////////////////////
 //                                                                            //
@@ -42,8 +36,8 @@ IdMap = function (idStringify, idParse) {                                     //
 };                                                                            // 6
                                                                               // 7
 // Some of these methods are designed to match methods on OrderedDict, since  // 8
-// (eg) ObserveMultiplex and _CachingChangeObserver use them interchangeably. // 9
-// (Conceivably, this should be replaced with "UnorderedDict" with a specific // 10
+// (eg) ObserveMultiplex and _CachingChangeObserver use them interchangeably.
+// (Conceivably, this should be replaced with "UnorderedDict" with a specific
 // set of methods that overlap between the two.)                              // 11
                                                                               // 12
 _.extend(IdMap.prototype, {                                                   // 13
@@ -99,7 +93,7 @@ _.extend(IdMap.prototype, {                                                   //
     self._map[key] = def;                                                     // 63
     return def;                                                               // 64
   },                                                                          // 65
-  // Assumes that values are EJSON-cloneable, and that we don't need to clone // 66
+  // Assumes that values are EJSON-cloneable, and that we don't need to clone
   // IDs (ie, that nobody is going to mutate an ObjectId).                    // 67
   clone: function () {                                                        // 68
     var self = this;                                                          // 69
@@ -119,8 +113,11 @@ _.extend(IdMap.prototype, {                                                   //
 
 /* Exports */
 if (typeof Package === 'undefined') Package = {};
-Package['id-map'] = {
+(function (pkg, symbols) {
+  for (var s in symbols)
+    (s in pkg) || (pkg[s] = symbols[s]);
+})(Package['id-map'] = {}, {
   IdMap: IdMap
-};
+});
 
 })();

@@ -2,15 +2,8 @@
 //                                                                      //
 // This is a generated file. You can view the original                  //
 // source in your browser if your browser supports source maps.         //
-//                                                                      //
-// If you are using Chrome, open the Developer Tools and click the gear //
-// icon in its lower right corner. In the General Settings panel, turn  //
-// on 'Enable source maps'.                                             //
-//                                                                      //
-// If you are using Firefox 23, go to `about:config` and set the        //
-// `devtools.debugger.source-maps-enabled` preference to true.          //
-// (The preference should be on by default in Firefox 24; versions      //
-// older than 23 do not support source maps.)                           //
+// Source maps are supported by all recent versions of Chrome, Safari,  //
+// and Firefox, and by Internet Explorer 11.                            //
 //                                                                      //
 //////////////////////////////////////////////////////////////////////////
 
@@ -19,12 +12,14 @@
 
 /* Imports */
 var Meteor = Package.meteor.Meteor;
+var global = Package.meteor.global;
+var meteorEnv = Package.meteor.meteorEnv;
 var _ = Package.underscore._;
 
 /* Package-scope variables */
 var OrderedDict;
 
-(function () {
+(function(){
 
 ///////////////////////////////////////////////////////////////////////////////////
 //                                                                               //
@@ -66,7 +61,7 @@ OrderedDict = function (/* ... */) {                                            
                                                                                  // 32
 _.extend(OrderedDict.prototype, {                                                // 33
   // the "prefix keys with a space" thing comes from here                        // 34
-  // https://github.com/documentcloud/underscore/issues/376#issuecomment-2815649 // 35
+  // https://github.com/documentcloud/underscore/issues/376#issuecomment-2815649
   _k: function (key) { return " " + this._stringify(key); },                     // 36
                                                                                  // 37
   empty: function () {                                                           // 38
@@ -249,8 +244,11 @@ OrderedDict.BREAK = {"break": true};                                            
 
 /* Exports */
 if (typeof Package === 'undefined') Package = {};
-Package['ordered-dict'] = {
+(function (pkg, symbols) {
+  for (var s in symbols)
+    (s in pkg) || (pkg[s] = symbols[s]);
+})(Package['ordered-dict'] = {}, {
   OrderedDict: OrderedDict
-};
+});
 
 })();

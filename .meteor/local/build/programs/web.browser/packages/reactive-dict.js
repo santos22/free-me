@@ -2,15 +2,8 @@
 //                                                                      //
 // This is a generated file. You can view the original                  //
 // source in your browser if your browser supports source maps.         //
-//                                                                      //
-// If you are using Chrome, open the Developer Tools and click the gear //
-// icon in its lower right corner. In the General Settings panel, turn  //
-// on 'Enable source maps'.                                             //
-//                                                                      //
-// If you are using Firefox 23, go to `about:config` and set the        //
-// `devtools.debugger.source-maps-enabled` preference to true.          //
-// (The preference should be on by default in Firefox 24; versions      //
-// older than 23 do not support source maps.)                           //
+// Source maps are supported by all recent versions of Chrome, Safari,  //
+// and Firefox, and by Internet Explorer 11.                            //
 //                                                                      //
 //////////////////////////////////////////////////////////////////////////
 
@@ -19,248 +12,364 @@
 
 /* Imports */
 var Meteor = Package.meteor.Meteor;
+var global = Package.meteor.global;
+var meteorEnv = Package.meteor.meteorEnv;
 var _ = Package.underscore._;
 var Tracker = Package.tracker.Tracker;
 var Deps = Package.tracker.Deps;
 var EJSON = Package.ejson.EJSON;
+var meteorInstall = Package.modules.meteorInstall;
+var Buffer = Package.modules.Buffer;
+var process = Package.modules.process;
+var Symbol = Package['ecmascript-runtime'].Symbol;
+var Map = Package['ecmascript-runtime'].Map;
+var Set = Package['ecmascript-runtime'].Set;
+var meteorBabelHelpers = Package['babel-runtime'].meteorBabelHelpers;
+var Promise = Package.promise.Promise;
 
 /* Package-scope variables */
 var ReactiveDict;
 
-(function () {
+var require = meteorInstall({"node_modules":{"meteor":{"reactive-dict":{"reactive-dict.js":["babel-runtime/helpers/typeof",function(require,exports,module){
 
-//////////////////////////////////////////////////////////////////////////////////////////
-//                                                                                      //
-// packages/reactive-dict/reactive-dict.js                                              //
-//                                                                                      //
-//////////////////////////////////////////////////////////////////////////////////////////
-                                                                                        //
-// XXX come up with a serialization method which canonicalizes object key               // 1
-// order, which would allow us to use objects as values for equals.                     // 2
-var stringify = function (value) {                                                      // 3
-  if (value === undefined)                                                              // 4
-    return 'undefined';                                                                 // 5
-  return EJSON.stringify(value);                                                        // 6
-};                                                                                      // 7
-var parse = function (serialized) {                                                     // 8
-  if (serialized === undefined || serialized === 'undefined')                           // 9
-    return undefined;                                                                   // 10
-  return EJSON.parse(serialized);                                                       // 11
-};                                                                                      // 12
-                                                                                        // 13
-// XXX COMPAT WITH 0.9.1 : accept migrationData instead of dictName                     // 14
-ReactiveDict = function (dictName) {                                                    // 15
-  // this.keys: key -> value                                                            // 16
-  if (dictName) {                                                                       // 17
-    if (typeof dictName === 'string') {                                                 // 18
-      // the normal case, argument is a string name.                                    // 19
-      // _registerDictForMigrate will throw an error on duplicate name.                 // 20
-      ReactiveDict._registerDictForMigrate(dictName, this);                             // 21
-      this.keys = ReactiveDict._loadMigratedDict(dictName) || {};                       // 22
-    } else if (typeof dictName === 'object') {                                          // 23
-      // back-compat case: dictName is actually migrationData                           // 24
-      this.keys = dictName;                                                             // 25
-    } else {                                                                            // 26
-      throw new Error("Invalid ReactiveDict argument: " + dictName);                    // 27
-    }                                                                                   // 28
-  } else {                                                                              // 29
-    // no name given; no migration will be performed                                    // 30
-    this.keys = {};                                                                     // 31
-  }                                                                                     // 32
-                                                                                        // 33
-  this.keyDeps = {}; // key -> Dependency                                               // 34
-  this.keyValueDeps = {}; // key -> Dependency                                          // 35
-};                                                                                      // 36
-                                                                                        // 37
-_.extend(ReactiveDict.prototype, {                                                      // 38
-  // set() began as a key/value method, but we are now overloading it                   // 39
-  // to take an object of key/value pairs, similar to backbone                          // 40
-  // http://backbonejs.org/#Model-set                                                   // 41
-                                                                                        // 42
-  set: function (keyOrObject, value) {                                                  // 43
-    var self = this;                                                                    // 44
-                                                                                        // 45
-    if ((typeof keyOrObject === 'object') && (value === undefined)) {                   // 46
-      self._setObject(keyOrObject);                                                     // 47
-      return;                                                                           // 48
-    }                                                                                   // 49
-    // the input isn't an object, so it must be a key                                   // 50
-    // and we resume with the rest of the function                                      // 51
-    var key = keyOrObject;                                                              // 52
-                                                                                        // 53
-    value = stringify(value);                                                           // 54
-                                                                                        // 55
-    var oldSerializedValue = 'undefined';                                               // 56
-    if (_.has(self.keys, key)) oldSerializedValue = self.keys[key];                     // 57
-    if (value === oldSerializedValue)                                                   // 58
-      return;                                                                           // 59
-    self.keys[key] = value;                                                             // 60
-                                                                                        // 61
-    var changed = function (v) {                                                        // 62
-      v && v.changed();                                                                 // 63
-    };                                                                                  // 64
-                                                                                        // 65
-    changed(self.keyDeps[key]);                                                         // 66
-    if (self.keyValueDeps[key]) {                                                       // 67
-      changed(self.keyValueDeps[key][oldSerializedValue]);                              // 68
-      changed(self.keyValueDeps[key][value]);                                           // 69
-    }                                                                                   // 70
-  },                                                                                    // 71
-                                                                                        // 72
-  setDefault: function (key, value) {                                                   // 73
-    var self = this;                                                                    // 74
-    // for now, explicitly check for undefined, since there is no                       // 75
-    // ReactiveDict.clear().  Later we might have a ReactiveDict.clear(), in which case // 76
-    // we should check if it has the key.                                               // 77
-    if (self.keys[key] === undefined) {                                                 // 78
-      self.set(key, value);                                                             // 79
-    }                                                                                   // 80
-  },                                                                                    // 81
-                                                                                        // 82
-  get: function (key) {                                                                 // 83
-    var self = this;                                                                    // 84
-    self._ensureKey(key);                                                               // 85
-    self.keyDeps[key].depend();                                                         // 86
-    return parse(self.keys[key]);                                                       // 87
-  },                                                                                    // 88
-                                                                                        // 89
-  equals: function (key, value) {                                                       // 90
-    var self = this;                                                                    // 91
-                                                                                        // 92
-    // Mongo.ObjectID is in the 'mongo' package                                         // 93
-    var ObjectID = null;                                                                // 94
-    if (typeof Mongo !== 'undefined') {                                                 // 95
-      ObjectID = Mongo.ObjectID;                                                        // 96
-    }                                                                                   // 97
-                                                                                        // 98
-    // We don't allow objects (or arrays that might include objects) for                // 99
-    // .equals, because JSON.stringify doesn't canonicalize object key                  // 100
-    // order. (We can make equals have the right return value by parsing the            // 101
-    // current value and using EJSON.equals, but we won't have a canonical              // 102
-    // element of keyValueDeps[key] to store the dependency.) You can still use         // 103
-    // "EJSON.equals(reactiveDict.get(key), value)".                                    // 104
-    //                                                                                  // 105
-    // XXX we could allow arrays as long as we recursively check that there             // 106
-    // are no objects                                                                   // 107
-    if (typeof value !== 'string' &&                                                    // 108
-        typeof value !== 'number' &&                                                    // 109
-        typeof value !== 'boolean' &&                                                   // 110
-        typeof value !== 'undefined' &&                                                 // 111
-        !(value instanceof Date) &&                                                     // 112
-        !(ObjectID && value instanceof ObjectID) &&                                     // 113
-        value !== null)                                                                 // 114
-      throw new Error("ReactiveDict.equals: value must be scalar");                     // 115
-    var serializedValue = stringify(value);                                             // 116
-                                                                                        // 117
-    if (Tracker.active) {                                                               // 118
-      self._ensureKey(key);                                                             // 119
-                                                                                        // 120
-      if (! _.has(self.keyValueDeps[key], serializedValue))                             // 121
-        self.keyValueDeps[key][serializedValue] = new Tracker.Dependency;               // 122
-                                                                                        // 123
-      var isNew = self.keyValueDeps[key][serializedValue].depend();                     // 124
-      if (isNew) {                                                                      // 125
-        Tracker.onInvalidate(function () {                                              // 126
-          // clean up [key][serializedValue] if it's now empty, so we don't             // 127
-          // use O(n) memory for n = values seen ever                                   // 128
-          if (! self.keyValueDeps[key][serializedValue].hasDependents())                // 129
-            delete self.keyValueDeps[key][serializedValue];                             // 130
-        });                                                                             // 131
-      }                                                                                 // 132
-    }                                                                                   // 133
-                                                                                        // 134
-    var oldValue = undefined;                                                           // 135
-    if (_.has(self.keys, key)) oldValue = parse(self.keys[key]);                        // 136
-    return EJSON.equals(oldValue, value);                                               // 137
-  },                                                                                    // 138
-                                                                                        // 139
-  _setObject: function (object) {                                                       // 140
-    var self = this;                                                                    // 141
-                                                                                        // 142
-    _.each(object, function (value, key){                                               // 143
-      self.set(key, value);                                                             // 144
-    });                                                                                 // 145
-  },                                                                                    // 146
-                                                                                        // 147
-  _ensureKey: function (key) {                                                          // 148
-    var self = this;                                                                    // 149
-    if (!(key in self.keyDeps)) {                                                       // 150
-      self.keyDeps[key] = new Tracker.Dependency;                                       // 151
-      self.keyValueDeps[key] = {};                                                      // 152
-    }                                                                                   // 153
-  },                                                                                    // 154
-                                                                                        // 155
-  // Get a JSON value that can be passed to the constructor to                          // 156
-  // create a new ReactiveDict with the same contents as this one                       // 157
-  _getMigrationData: function () {                                                      // 158
-    // XXX sanitize and make sure it's JSONible?                                        // 159
-    return this.keys;                                                                   // 160
-  }                                                                                     // 161
-});                                                                                     // 162
-                                                                                        // 163
-//////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//                                                                                                                //
+// packages/reactive-dict/reactive-dict.js                                                                        //
+//                                                                                                                //
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+                                                                                                                  //
+var _typeof;module.import('babel-runtime/helpers/typeof',{"default":function(v){_typeof=v}});                     //
+// XXX come up with a serialization method which canonicalizes object key                                         // 1
+// order, which would allow us to use objects as values for equals.                                               // 2
+var stringify = function stringify(value) {                                                                       // 3
+  if (value === undefined) return 'undefined';                                                                    // 4
+  return EJSON.stringify(value);                                                                                  // 6
+};                                                                                                                // 7
+var parse = function parse(serialized) {                                                                          // 8
+  if (serialized === undefined || serialized === 'undefined') return undefined;                                   // 9
+  return EJSON.parse(serialized);                                                                                 // 11
+};                                                                                                                // 12
+                                                                                                                  //
+var changed = function changed(v) {                                                                               // 14
+  v && v.changed();                                                                                               // 15
+};                                                                                                                // 16
+                                                                                                                  //
+// XXX COMPAT WITH 0.9.1 : accept migrationData instead of dictName                                               // 18
+ReactiveDict = function (_ReactiveDict) {                                                                         // 19
+  function ReactiveDict(_x) {                                                                                     // 19
+    return _ReactiveDict.apply(this, arguments);                                                                  // 19
+  }                                                                                                               // 19
+                                                                                                                  //
+  ReactiveDict.toString = function () {                                                                           // 19
+    return _ReactiveDict.toString();                                                                              // 19
+  };                                                                                                              // 19
+                                                                                                                  //
+  return ReactiveDict;                                                                                            // 19
+}(function (dictName) {                                                                                           // 19
+  // this.keys: key -> value                                                                                      // 20
+  if (dictName) {                                                                                                 // 21
+    if (typeof dictName === 'string') {                                                                           // 22
+      // the normal case, argument is a string name.                                                              // 23
+      // _registerDictForMigrate will throw an error on duplicate name.                                           // 24
+      ReactiveDict._registerDictForMigrate(dictName, this);                                                       // 25
+      this.keys = ReactiveDict._loadMigratedDict(dictName) || {};                                                 // 26
+      this.name = dictName;                                                                                       // 27
+    } else if ((typeof dictName === 'undefined' ? 'undefined' : _typeof(dictName)) === 'object') {                // 28
+      // back-compat case: dictName is actually migrationData                                                     // 29
+      this.keys = dictName;                                                                                       // 30
+    } else {                                                                                                      // 31
+      throw new Error("Invalid ReactiveDict argument: " + dictName);                                              // 32
+    }                                                                                                             // 33
+  } else {                                                                                                        // 34
+    // no name given; no migration will be performed                                                              // 35
+    this.keys = {};                                                                                               // 36
+  }                                                                                                               // 37
+                                                                                                                  //
+  this.allDeps = new Tracker.Dependency();                                                                        // 39
+  this.keyDeps = {}; // key -> Dependency                                                                         // 40
+  this.keyValueDeps = {}; // key -> Dependency                                                                    // 41
+});                                                                                                               // 42
+                                                                                                                  //
+_.extend(ReactiveDict.prototype, {                                                                                // 44
+  // set() began as a key/value method, but we are now overloading it                                             // 45
+  // to take an object of key/value pairs, similar to backbone                                                    // 46
+  // http://backbonejs.org/#Model-set                                                                             // 47
+                                                                                                                  //
+  set: function () {                                                                                              // 49
+    function set(keyOrObject, value) {                                                                            // 49
+      var self = this;                                                                                            // 50
+                                                                                                                  //
+      if ((typeof keyOrObject === 'undefined' ? 'undefined' : _typeof(keyOrObject)) === 'object' && value === undefined) {
+        // Called as `dict.set({...})`                                                                            // 53
+        self._setObject(keyOrObject);                                                                             // 54
+        return;                                                                                                   // 55
+      }                                                                                                           // 56
+      // the input isn't an object, so it must be a key                                                           // 57
+      // and we resume with the rest of the function                                                              // 58
+      var key = keyOrObject;                                                                                      // 59
+                                                                                                                  //
+      value = stringify(value);                                                                                   // 61
+                                                                                                                  //
+      var keyExisted = _.has(self.keys, key);                                                                     // 63
+      var oldSerializedValue = keyExisted ? self.keys[key] : 'undefined';                                         // 64
+      var isNewValue = value !== oldSerializedValue;                                                              // 65
+                                                                                                                  //
+      self.keys[key] = value;                                                                                     // 67
+                                                                                                                  //
+      if (isNewValue || !keyExisted) {                                                                            // 69
+        self.allDeps.changed();                                                                                   // 70
+      }                                                                                                           // 71
+                                                                                                                  //
+      if (isNewValue) {                                                                                           // 73
+        changed(self.keyDeps[key]);                                                                               // 74
+        if (self.keyValueDeps[key]) {                                                                             // 75
+          changed(self.keyValueDeps[key][oldSerializedValue]);                                                    // 76
+          changed(self.keyValueDeps[key][value]);                                                                 // 77
+        }                                                                                                         // 78
+      }                                                                                                           // 79
+    }                                                                                                             // 80
+                                                                                                                  //
+    return set;                                                                                                   // 49
+  }(),                                                                                                            // 49
+                                                                                                                  //
+  setDefault: function () {                                                                                       // 82
+    function setDefault(keyOrObject, value) {                                                                     // 82
+      var self = this;                                                                                            // 83
+                                                                                                                  //
+      if ((typeof keyOrObject === 'undefined' ? 'undefined' : _typeof(keyOrObject)) === 'object' && value === undefined) {
+        // Called as `dict.setDefault({...})`                                                                     // 86
+        self._setDefaultObject(keyOrObject);                                                                      // 87
+        return;                                                                                                   // 88
+      }                                                                                                           // 89
+      // the input isn't an object, so it must be a key                                                           // 90
+      // and we resume with the rest of the function                                                              // 91
+      var key = keyOrObject;                                                                                      // 92
+                                                                                                                  //
+      if (!_.has(self.keys, key)) {                                                                               // 94
+        self.set(key, value);                                                                                     // 95
+      }                                                                                                           // 96
+    }                                                                                                             // 97
+                                                                                                                  //
+    return setDefault;                                                                                            // 82
+  }(),                                                                                                            // 82
+                                                                                                                  //
+  get: function () {                                                                                              // 99
+    function get(key) {                                                                                           // 99
+      var self = this;                                                                                            // 100
+      self._ensureKey(key);                                                                                       // 101
+      self.keyDeps[key].depend();                                                                                 // 102
+      return parse(self.keys[key]);                                                                               // 103
+    }                                                                                                             // 104
+                                                                                                                  //
+    return get;                                                                                                   // 99
+  }(),                                                                                                            // 99
+                                                                                                                  //
+  equals: function () {                                                                                           // 106
+    function equals(key, value) {                                                                                 // 106
+      var self = this;                                                                                            // 107
+                                                                                                                  //
+      // Mongo.ObjectID is in the 'mongo' package                                                                 // 109
+      var ObjectID = null;                                                                                        // 110
+      if (Package.mongo) {                                                                                        // 111
+        ObjectID = Package.mongo.Mongo.ObjectID;                                                                  // 112
+      }                                                                                                           // 113
+                                                                                                                  //
+      // We don't allow objects (or arrays that might include objects) for                                        // 115
+      // .equals, because JSON.stringify doesn't canonicalize object key                                          // 116
+      // order. (We can make equals have the right return value by parsing the                                    // 117
+      // current value and using EJSON.equals, but we won't have a canonical                                      // 118
+      // element of keyValueDeps[key] to store the dependency.) You can still use                                 // 119
+      // "EJSON.equals(reactiveDict.get(key), value)".                                                            // 120
+      //                                                                                                          // 121
+      // XXX we could allow arrays as long as we recursively check that there                                     // 122
+      // are no objects                                                                                           // 123
+      if (typeof value !== 'string' && typeof value !== 'number' && typeof value !== 'boolean' && typeof value !== 'undefined' && !(value instanceof Date) && !(ObjectID && value instanceof ObjectID) && value !== null) {
+        throw new Error("ReactiveDict.equals: value must be scalar");                                             // 131
+      }                                                                                                           // 132
+      var serializedValue = stringify(value);                                                                     // 133
+                                                                                                                  //
+      if (Tracker.active) {                                                                                       // 135
+        self._ensureKey(key);                                                                                     // 136
+                                                                                                                  //
+        if (!_.has(self.keyValueDeps[key], serializedValue)) self.keyValueDeps[key][serializedValue] = new Tracker.Dependency();
+                                                                                                                  //
+        var isNew = self.keyValueDeps[key][serializedValue].depend();                                             // 141
+        if (isNew) {                                                                                              // 142
+          Tracker.onInvalidate(function () {                                                                      // 143
+            // clean up [key][serializedValue] if it's now empty, so we don't                                     // 144
+            // use O(n) memory for n = values seen ever                                                           // 145
+            if (!self.keyValueDeps[key][serializedValue].hasDependents()) delete self.keyValueDeps[key][serializedValue];
+          });                                                                                                     // 148
+        }                                                                                                         // 149
+      }                                                                                                           // 150
+                                                                                                                  //
+      var oldValue = undefined;                                                                                   // 152
+      if (_.has(self.keys, key)) oldValue = parse(self.keys[key]);                                                // 153
+      return EJSON.equals(oldValue, value);                                                                       // 154
+    }                                                                                                             // 155
+                                                                                                                  //
+    return equals;                                                                                                // 106
+  }(),                                                                                                            // 106
+                                                                                                                  //
+  all: function () {                                                                                              // 157
+    function all() {                                                                                              // 157
+      this.allDeps.depend();                                                                                      // 158
+      var ret = {};                                                                                               // 159
+      _.each(this.keys, function (value, key) {                                                                   // 160
+        ret[key] = parse(value);                                                                                  // 161
+      });                                                                                                         // 162
+      return ret;                                                                                                 // 163
+    }                                                                                                             // 164
+                                                                                                                  //
+    return all;                                                                                                   // 157
+  }(),                                                                                                            // 157
+                                                                                                                  //
+  clear: function () {                                                                                            // 166
+    function clear() {                                                                                            // 166
+      var self = this;                                                                                            // 167
+                                                                                                                  //
+      var oldKeys = self.keys;                                                                                    // 169
+      self.keys = {};                                                                                             // 170
+                                                                                                                  //
+      self.allDeps.changed();                                                                                     // 172
+                                                                                                                  //
+      _.each(oldKeys, function (value, key) {                                                                     // 174
+        changed(self.keyDeps[key]);                                                                               // 175
+        if (self.keyValueDeps[key]) {                                                                             // 176
+          changed(self.keyValueDeps[key][value]);                                                                 // 177
+          changed(self.keyValueDeps[key]['undefined']);                                                           // 178
+        }                                                                                                         // 179
+      });                                                                                                         // 180
+    }                                                                                                             // 182
+                                                                                                                  //
+    return clear;                                                                                                 // 166
+  }(),                                                                                                            // 166
+                                                                                                                  //
+  'delete': function () {                                                                                         // 184
+    function _delete(key) {                                                                                       // 184
+      var self = this;                                                                                            // 185
+      var didRemove = false;                                                                                      // 186
+                                                                                                                  //
+      if (_.has(self.keys, key)) {                                                                                // 188
+        var oldValue = self.keys[key];                                                                            // 189
+        delete self.keys[key];                                                                                    // 190
+        changed(self.keyDeps[key]);                                                                               // 191
+        if (self.keyValueDeps[key]) {                                                                             // 192
+          changed(self.keyValueDeps[key][oldValue]);                                                              // 193
+          changed(self.keyValueDeps[key]['undefined']);                                                           // 194
+        }                                                                                                         // 195
+        self.allDeps.changed();                                                                                   // 196
+        didRemove = true;                                                                                         // 197
+      }                                                                                                           // 198
+                                                                                                                  //
+      return didRemove;                                                                                           // 200
+    }                                                                                                             // 201
+                                                                                                                  //
+    return _delete;                                                                                               // 184
+  }(),                                                                                                            // 184
+                                                                                                                  //
+  _setObject: function () {                                                                                       // 203
+    function _setObject(object) {                                                                                 // 203
+      var self = this;                                                                                            // 204
+                                                                                                                  //
+      _.each(object, function (value, key) {                                                                      // 206
+        self.set(key, value);                                                                                     // 207
+      });                                                                                                         // 208
+    }                                                                                                             // 209
+                                                                                                                  //
+    return _setObject;                                                                                            // 203
+  }(),                                                                                                            // 203
+                                                                                                                  //
+  _setDefaultObject: function () {                                                                                // 211
+    function _setDefaultObject(object) {                                                                          // 211
+      var self = this;                                                                                            // 212
+                                                                                                                  //
+      _.each(object, function (value, key) {                                                                      // 214
+        self.setDefault(key, value);                                                                              // 215
+      });                                                                                                         // 216
+    }                                                                                                             // 217
+                                                                                                                  //
+    return _setDefaultObject;                                                                                     // 211
+  }(),                                                                                                            // 211
+                                                                                                                  //
+  _ensureKey: function () {                                                                                       // 219
+    function _ensureKey(key) {                                                                                    // 219
+      var self = this;                                                                                            // 220
+      if (!(key in self.keyDeps)) {                                                                               // 221
+        self.keyDeps[key] = new Tracker.Dependency();                                                             // 222
+        self.keyValueDeps[key] = {};                                                                              // 223
+      }                                                                                                           // 224
+    }                                                                                                             // 225
+                                                                                                                  //
+    return _ensureKey;                                                                                            // 219
+  }(),                                                                                                            // 219
+                                                                                                                  //
+  // Get a JSON value that can be passed to the constructor to                                                    // 227
+  // create a new ReactiveDict with the same contents as this one                                                 // 228
+  _getMigrationData: function () {                                                                                // 229
+    function _getMigrationData() {                                                                                // 229
+      // XXX sanitize and make sure it's JSONible?                                                                // 230
+      return this.keys;                                                                                           // 231
+    }                                                                                                             // 232
+                                                                                                                  //
+    return _getMigrationData;                                                                                     // 229
+  }()                                                                                                             // 229
+});                                                                                                               // 44
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-}).call(this);
+}],"migration.js":function(){
 
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//                                                                                                                //
+// packages/reactive-dict/migration.js                                                                            //
+//                                                                                                                //
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+                                                                                                                  //
+ReactiveDict._migratedDictData = {}; // name -> data                                                              // 1
+ReactiveDict._dictsToMigrate = {}; // name -> ReactiveDict                                                        // 2
+                                                                                                                  //
+ReactiveDict._loadMigratedDict = function (dictName) {                                                            // 4
+  if (_.has(ReactiveDict._migratedDictData, dictName)) return ReactiveDict._migratedDictData[dictName];           // 5
+                                                                                                                  //
+  return null;                                                                                                    // 8
+};                                                                                                                // 9
+                                                                                                                  //
+ReactiveDict._registerDictForMigrate = function (dictName, dict) {                                                // 11
+  if (_.has(ReactiveDict._dictsToMigrate, dictName)) throw new Error("Duplicate ReactiveDict name: " + dictName);
+                                                                                                                  //
+  ReactiveDict._dictsToMigrate[dictName] = dict;                                                                  // 15
+};                                                                                                                // 16
+                                                                                                                  //
+if (Meteor.isClient && Package.reload) {                                                                          // 18
+  // Put old migrated data into ReactiveDict._migratedDictData,                                                   // 19
+  // where it can be accessed by ReactiveDict._loadMigratedDict.                                                  // 20
+  var migrationData = Package.reload.Reload._migrationData('reactive-dict');                                      // 21
+  if (migrationData && migrationData.dicts) ReactiveDict._migratedDictData = migrationData.dicts;                 // 22
+                                                                                                                  //
+  // On migration, assemble the data from all the dicts that have been                                            // 25
+  // registered.                                                                                                  // 26
+  Package.reload.Reload._onMigrate('reactive-dict', function () {                                                 // 27
+    var dictsToMigrate = ReactiveDict._dictsToMigrate;                                                            // 28
+    var dataToMigrate = {};                                                                                       // 29
+                                                                                                                  //
+    for (var dictName in meteorBabelHelpers.sanitizeForInObject(dictsToMigrate)) {                                // 31
+      dataToMigrate[dictName] = dictsToMigrate[dictName]._getMigrationData();                                     // 32
+    }return [true, { dicts: dataToMigrate }];                                                                     // 31
+  });                                                                                                             // 35
+}                                                                                                                 // 36
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-
-
-
-
-(function () {
-
-//////////////////////////////////////////////////////////////////////////////////////////
-//                                                                                      //
-// packages/reactive-dict/migration.js                                                  //
-//                                                                                      //
-//////////////////////////////////////////////////////////////////////////////////////////
-                                                                                        //
-ReactiveDict._migratedDictData = {}; // name -> data                                    // 1
-ReactiveDict._dictsToMigrate = {}; // name -> ReactiveDict                              // 2
-                                                                                        // 3
-ReactiveDict._loadMigratedDict = function (dictName) {                                  // 4
-  if (_.has(ReactiveDict._migratedDictData, dictName))                                  // 5
-    return ReactiveDict._migratedDictData[dictName];                                    // 6
-                                                                                        // 7
-  return null;                                                                          // 8
-};                                                                                      // 9
-                                                                                        // 10
-ReactiveDict._registerDictForMigrate = function (dictName, dict) {                      // 11
-  if (_.has(ReactiveDict._dictsToMigrate, dictName))                                    // 12
-    throw new Error("Duplicate ReactiveDict name: " + dictName);                        // 13
-                                                                                        // 14
-  ReactiveDict._dictsToMigrate[dictName] = dict;                                        // 15
-};                                                                                      // 16
-                                                                                        // 17
-if (Meteor.isClient && Package.reload) {                                                // 18
-  // Put old migrated data into ReactiveDict._migratedDictData,                         // 19
-  // where it can be accessed by ReactiveDict._loadMigratedDict.                        // 20
-  var migrationData = Package.reload.Reload._migrationData('reactive-dict');            // 21
-  if (migrationData && migrationData.dicts)                                             // 22
-    ReactiveDict._migratedDictData = migrationData.dicts;                               // 23
-                                                                                        // 24
-  // On migration, assemble the data from all the dicts that have been                  // 25
-  // registered.                                                                        // 26
-  Package.reload.Reload._onMigrate('reactive-dict', function () {                       // 27
-    var dictsToMigrate = ReactiveDict._dictsToMigrate;                                  // 28
-    var dataToMigrate = {};                                                             // 29
-                                                                                        // 30
-    for (var dictName in dictsToMigrate)                                                // 31
-      dataToMigrate[dictName] = dictsToMigrate[dictName]._getMigrationData();           // 32
-                                                                                        // 33
-    return [true, {dicts: dataToMigrate}];                                              // 34
-  });                                                                                   // 35
-}                                                                                       // 36
-                                                                                        // 37
-//////////////////////////////////////////////////////////////////////////////////////////
-
-}).call(this);
-
+}}}}},{"extensions":[".js",".json"]});
+require("./node_modules/meteor/reactive-dict/reactive-dict.js");
+require("./node_modules/meteor/reactive-dict/migration.js");
 
 /* Exports */
 if (typeof Package === 'undefined') Package = {};
-Package['reactive-dict'] = {
+(function (pkg, symbols) {
+  for (var s in symbols)
+    (s in pkg) || (pkg[s] = symbols[s]);
+})(Package['reactive-dict'] = {}, {
   ReactiveDict: ReactiveDict
-};
+});
 
 })();

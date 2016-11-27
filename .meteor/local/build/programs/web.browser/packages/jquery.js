@@ -2,15 +2,8 @@
 //                                                                      //
 // This is a generated file. You can view the original                  //
 // source in your browser if your browser supports source maps.         //
-//                                                                      //
-// If you are using Chrome, open the Developer Tools and click the gear //
-// icon in its lower right corner. In the General Settings panel, turn  //
-// on 'Enable source maps'.                                             //
-//                                                                      //
-// If you are using Firefox 23, go to `about:config` and set the        //
-// `devtools.debugger.source-maps-enabled` preference to true.          //
-// (The preference should be on by default in Firefox 24; versions      //
-// older than 23 do not support source maps.)                           //
+// Source maps are supported by all recent versions of Chrome, Safari,  //
+// and Firefox, and by Internet Explorer 11.                            //
 //                                                                      //
 //////////////////////////////////////////////////////////////////////////
 
@@ -19,11 +12,43 @@
 
 /* Imports */
 var Meteor = Package.meteor.Meteor;
+var global = Package.meteor.global;
+var meteorEnv = Package.meteor.meteorEnv;
+var meteorInstall = Package.modules.meteorInstall;
+var Buffer = Package.modules.Buffer;
+var process = Package.modules.process;
 
 /* Package-scope variables */
 var $, jQuery;
 
-(function () {
+var require = meteorInstall({"node_modules":{"meteor":{"jquery":{"main.js":["jquery","./jquery.js",function(require,exports){
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//                                                                                                                   //
+// packages/jquery/main.js                                                                                           //
+//                                                                                                                   //
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+                                                                                                                     //
+var global = this;                                                                                                   // 1
+                                                                                                                     // 2
+try {                                                                                                                // 3
+  var jQuery = require("jquery");                                                                                    // 4
+} catch (e) {                                                                                                        // 5
+  jQuery = require("./jquery.js");                                                                                   // 6
+}                                                                                                                    // 7
+                                                                                                                     // 8
+// Provide values for the exported variables of the jquery package.                                                  // 9
+exports.$ = exports.jQuery = jQuery;                                                                                 // 10
+                                                                                                                     // 11
+// There's no stopping legacy code from referring to window.$ or                                                     // 12
+// window.jQuery, so we have to keep defining those properties globally,                                             // 13
+// but at least the exports of this package will be reliable.                                                        // 14
+global.$ = global.$ || jQuery;                                                                                       // 15
+global.jQuery = global.jQuery || jQuery;                                                                             // 16
+                                                                                                                     // 17
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+}],"jquery.js":function(require,exports,module){
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //                                                                                                                   //
@@ -2927,7 +2952,7 @@ jQuery.extend({                                                                 
 		var matched = [],                                                                                                  // 2894
 			cur = elem[ dir ];                                                                                                // 2895
                                                                                                                      // 2896
-		while ( cur && cur.nodeType !== 9 && (until === undefined || cur.nodeType !== 1 || !jQuery( cur ).is( until )) ) { // 2897
+		while ( cur && cur.nodeType !== 9 && (until === undefined || cur.nodeType !== 1 || !jQuery( cur ).is( until )) ) {
 			if ( cur.nodeType === 1 ) {                                                                                       // 2898
 				matched.push( cur );                                                                                             // 2899
 			}                                                                                                                 // 2900
@@ -8483,7 +8508,7 @@ jQuery.fn.extend({                                                              
 			i = 0,                                                                                                            // 8450
 			l = this.length;                                                                                                  // 8451
 		for ( ; i < l; i++ ) {                                                                                             // 8452
-			if ( this[i].nodeType === 1 && (" " + this[i].className + " ").replace(rclass, " ").indexOf( className ) >= 0 ) { // 8453
+			if ( this[i].nodeType === 1 && (" " + this[i].className + " ").replace(rclass, " ").indexOf( className ) >= 0 ) {
 				return true;                                                                                                     // 8454
 			}                                                                                                                 // 8455
 		}                                                                                                                  // 8456
@@ -10380,36 +10405,17 @@ return jQuery;                                                                  
                                                                                                                      // 10347
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-}).call(this);
-
-
-
-
-
-
-(function () {
-
-///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-//                                                                                                                   //
-// packages/jquery/post.js                                                                                           //
-//                                                                                                                   //
-///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-                                                                                                                     //
-// Put jQuery and $ in our exported package-scope variables and remove window.$.                                     // 1
-// (Sadly, we don't call noConflict(true), which would also remove                                                   // 2
-// window.jQuery, because bootstrap very specifically relies on window.jQuery.)                                      // 3
-$ = jQuery = window.jQuery.noConflict();                                                                             // 4
-                                                                                                                     // 5
-///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-}).call(this);
-
+}}}}},{"extensions":[".js",".json"]});
+var exports = require("./node_modules/meteor/jquery/main.js");
 
 /* Exports */
 if (typeof Package === 'undefined') Package = {};
-Package.jquery = {
+(function (pkg, symbols) {
+  for (var s in symbols)
+    (s in pkg) || (pkg[s] = symbols[s]);
+})(Package.jquery = exports, {
   $: $,
   jQuery: jQuery
-};
+});
 
 })();

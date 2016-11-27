@@ -18,5 +18,4 @@ Router.route('/yaks/:_id', {
   return Yaks.findOne(this.params._id);
   }
 });
-
-})();
+}).call(this);

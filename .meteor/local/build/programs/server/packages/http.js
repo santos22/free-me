@@ -2,13 +2,24 @@
 
 /* Imports */
 var Meteor = Package.meteor.Meteor;
+var global = Package.meteor.global;
+var meteorEnv = Package.meteor.meteorEnv;
 var _ = Package.underscore._;
 var URL = Package.url.URL;
+var ECMAScript = Package.ecmascript.ECMAScript;
+var meteorInstall = Package.modules.meteorInstall;
+var Buffer = Package.modules.Buffer;
+var process = Package.modules.process;
+var Symbol = Package['ecmascript-runtime'].Symbol;
+var Map = Package['ecmascript-runtime'].Map;
+var Set = Package['ecmascript-runtime'].Set;
+var meteorBabelHelpers = Package['babel-runtime'].meteorBabelHelpers;
+var Promise = Package.promise.Promise;
 
 /* Package-scope variables */
-var HTTP, HTTPInternals, makeErrorByStatus, populateData;
+var makeErrorByStatus, populateData, HTTP, HTTPInternals;
 
-(function () {
+var require = meteorInstall({"node_modules":{"meteor":{"http":{"httpcall_common.js":function(){
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //                                                                                                                  //
@@ -16,96 +27,102 @@ var HTTP, HTTPInternals, makeErrorByStatus, populateData;
 //                                                                                                                  //
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
                                                                                                                     //
-makeErrorByStatus = function(statusCode, content) {                                                                 // 1
-  var MAX_LENGTH = 500; // if you change this, also change the appropriate test                                     // 2
-                                                                                                                    // 3
-  var truncate = function(str, length) {                                                                            // 4
-    return str.length > length ? str.slice(0, length) + '...' : str;                                                // 5
-  };                                                                                                                // 6
-                                                                                                                    // 7
-  var message = "failed [" + statusCode + "]";                                                                      // 8
-  if (content)                                                                                                      // 9
-    message += " " + truncate(content.replace(/\n/g, " "), MAX_LENGTH);                                             // 10
-                                                                                                                    // 11
-  return new Error(message);                                                                                        // 12
-};                                                                                                                  // 13
-                                                                                                                    // 14
-                                                                                                                    // 15
-// Fill in `response.data` if the content-type is JSON.                                                             // 16
-populateData = function(response) {                                                                                 // 17
-  // Read Content-Type header, up to a ';' if there is one.                                                         // 18
-  // A typical header might be "application/json; charset=utf-8"                                                    // 19
-  // or just "application/json".                                                                                    // 20
-  var contentType = (response.headers['content-type'] || ';').split(';')[0];                                        // 21
-                                                                                                                    // 22
-  // Only try to parse data as JSON if server sets correct content type.                                            // 23
-  if (_.include(['application/json', 'text/javascript'], contentType)) {                                            // 24
-    try {                                                                                                           // 25
-      response.data = JSON.parse(response.content);                                                                 // 26
-    } catch (err) {                                                                                                 // 27
-      response.data = null;                                                                                         // 28
-    }                                                                                                               // 29
-  } else {                                                                                                          // 30
-    response.data = null;                                                                                           // 31
-  }                                                                                                                 // 32
-};                                                                                                                  // 33
-                                                                                                                    // 34
-HTTP = {};                                                                                                          // 35
-                                                                                                                    // 36
-/**                                                                                                                 // 37
+var MAX_LENGTH = 500; // if you change this, also change the appropriate test                                       // 1
+                                                                                                                    //
+makeErrorByStatus = function makeErrorByStatus(statusCode, content) {                                               // 3
+  var message = 'failed [' + statusCode + ']';                                                                      // 4
+                                                                                                                    //
+  if (content) {                                                                                                    // 6
+    var stringContent = typeof content == "string" ? content : content.toString();                                  // 7
+                                                                                                                    //
+    message += ' ' + truncate(stringContent.replace(/\n/g, ' '), MAX_LENGTH);                                       // 10
+  }                                                                                                                 // 11
+                                                                                                                    //
+  return new Error(message);                                                                                        // 13
+};                                                                                                                  // 14
+                                                                                                                    //
+function truncate(str, length) {                                                                                    // 16
+  return str.length > length ? str.slice(0, length) + '...' : str;                                                  // 17
+}                                                                                                                   // 18
+                                                                                                                    //
+// Fill in `response.data` if the content-type is JSON.                                                             // 20
+populateData = function populateData(response) {                                                                    // 21
+  // Read Content-Type header, up to a ';' if there is one.                                                         // 22
+  // A typical header might be "application/json; charset=utf-8"                                                    // 23
+  // or just "application/json".                                                                                    // 24
+  var contentType = (response.headers['content-type'] || ';').split(';')[0];                                        // 25
+                                                                                                                    //
+  // Only try to parse data as JSON if server sets correct content type.                                            // 27
+  if (_.include(['application/json', 'text/javascript', 'application/javascript', 'application/x-javascript'], contentType)) {
+    try {                                                                                                           // 30
+      response.data = JSON.parse(response.content);                                                                 // 31
+    } catch (err) {                                                                                                 // 32
+      response.data = null;                                                                                         // 33
+    }                                                                                                               // 34
+  } else {                                                                                                          // 35
+    response.data = null;                                                                                           // 36
+  }                                                                                                                 // 37
+};                                                                                                                  // 38
+                                                                                                                    //
+HTTP = {};                                                                                                          // 40
+                                                                                                                    //
+/**                                                                                                                 // 42
  * @summary Send an HTTP `GET` request. Equivalent to calling [`HTTP.call`](#http_call) with "GET" as the first argument.
- * @param {String} url The URL to which the request should be sent.                                                 // 39
- * @param {Object} [callOptions] Options passed on to [`HTTP.call`](#http_call).                                    // 40
- * @param {Function} [asyncCallback] Callback that is called when the request is completed. Required on the client. // 41
- * @locus Anywhere                                                                                                  // 42
- */                                                                                                                 // 43
-HTTP.get = function (/* varargs */) {                                                                               // 44
-  return HTTP.call.apply(this, ["GET"].concat(_.toArray(arguments)));                                               // 45
-};                                                                                                                  // 46
-                                                                                                                    // 47
-/**                                                                                                                 // 48
+ * @param {String} url The URL to which the request should be sent.                                                 //
+ * @param {Object} [callOptions] Options passed on to [`HTTP.call`](#http_call).                                    //
+ * @param {Function} [asyncCallback] Callback that is called when the request is completed. Required on the client.
+ * @locus Anywhere                                                                                                  //
+ */                                                                                                                 //
+HTTP.get = function () /* varargs */{                                                                               // 49
+  return HTTP.call.apply(this, ["GET"].concat(_.toArray(arguments)));                                               // 50
+};                                                                                                                  // 51
+                                                                                                                    //
+/**                                                                                                                 // 53
  * @summary Send an HTTP `POST` request. Equivalent to calling [`HTTP.call`](#http_call) with "POST" as the first argument.
- * @param {String} url The URL to which the request should be sent.                                                 // 50
- * @param {Object} [callOptions] Options passed on to [`HTTP.call`](#http_call).                                    // 51
- * @param {Function} [asyncCallback] Callback that is called when the request is completed. Required on the client. // 52
- * @locus Anywhere                                                                                                  // 53
- */                                                                                                                 // 54
-HTTP.post = function (/* varargs */) {                                                                              // 55
-  return HTTP.call.apply(this, ["POST"].concat(_.toArray(arguments)));                                              // 56
-};                                                                                                                  // 57
-                                                                                                                    // 58
-/**                                                                                                                 // 59
+ * @param {String} url The URL to which the request should be sent.                                                 //
+ * @param {Object} [callOptions] Options passed on to [`HTTP.call`](#http_call).                                    //
+ * @param {Function} [asyncCallback] Callback that is called when the request is completed. Required on the client.
+ * @locus Anywhere                                                                                                  //
+ */                                                                                                                 //
+HTTP.post = function () /* varargs */{                                                                              // 60
+  return HTTP.call.apply(this, ["POST"].concat(_.toArray(arguments)));                                              // 61
+};                                                                                                                  // 62
+                                                                                                                    //
+/**                                                                                                                 // 64
  * @summary Send an HTTP `PUT` request. Equivalent to calling [`HTTP.call`](#http_call) with "PUT" as the first argument.
- * @param {String} url The URL to which the request should be sent.                                                 // 61
- * @param {Object} [callOptions] Options passed on to [`HTTP.call`](#http_call).                                    // 62
- * @param {Function} [asyncCallback] Callback that is called when the request is completed. Required on the client. // 63
- * @locus Anywhere                                                                                                  // 64
- */                                                                                                                 // 65
-HTTP.put = function (/* varargs */) {                                                                               // 66
-  return HTTP.call.apply(this, ["PUT"].concat(_.toArray(arguments)));                                               // 67
-};                                                                                                                  // 68
-                                                                                                                    // 69
-/**                                                                                                                 // 70
- * @summary Send an HTTP `DELETE` request. Equivalent to calling [`HTTP.call`](#http_call) with "DELETE" as the first argument. (Named `del` to avoid conflic with the Javascript keyword `delete`)
- * @param {String} url The URL to which the request should be sent.                                                 // 72
- * @param {Object} [callOptions] Options passed on to [`HTTP.call`](#http_call).                                    // 73
- * @param {Function} [asyncCallback] Callback that is called when the request is completed. Required on the client. // 74
- * @locus Anywhere                                                                                                  // 75
- */                                                                                                                 // 76
-HTTP.del = function (/* varargs */) {                                                                               // 77
-  return HTTP.call.apply(this, ["DELETE"].concat(_.toArray(arguments)));                                            // 78
-};                                                                                                                  // 79
-                                                                                                                    // 80
+ * @param {String} url The URL to which the request should be sent.                                                 //
+ * @param {Object} [callOptions] Options passed on to [`HTTP.call`](#http_call).                                    //
+ * @param {Function} [asyncCallback] Callback that is called when the request is completed. Required on the client.
+ * @locus Anywhere                                                                                                  //
+ */                                                                                                                 //
+HTTP.put = function () /* varargs */{                                                                               // 71
+  return HTTP.call.apply(this, ["PUT"].concat(_.toArray(arguments)));                                               // 72
+};                                                                                                                  // 73
+                                                                                                                    //
+/**                                                                                                                 // 75
+ * @summary Send an HTTP `DELETE` request. Equivalent to calling [`HTTP.call`](#http_call) with "DELETE" as the first argument. (Named `del` to avoid conflict with the Javascript keyword `delete`)
+ * @param {String} url The URL to which the request should be sent.                                                 //
+ * @param {Object} [callOptions] Options passed on to [`HTTP.call`](#http_call).                                    //
+ * @param {Function} [asyncCallback] Callback that is called when the request is completed. Required on the client.
+ * @locus Anywhere                                                                                                  //
+ */                                                                                                                 //
+HTTP.del = function () /* varargs */{                                                                               // 82
+  return HTTP.call.apply(this, ["DELETE"].concat(_.toArray(arguments)));                                            // 83
+};                                                                                                                  // 84
+                                                                                                                    //
+/**                                                                                                                 // 86
+ * @summary Send an HTTP `PATCH` request. Equivalent to calling [`HTTP.call`](#http_call) with "PATCH" as the first argument.
+ * @param {String} url The URL to which the request should be sent.                                                 //
+ * @param {Object} [callOptions] Options passed on to [`HTTP.call`](#http_call).                                    //
+ * @param {Function} [asyncCallback] Callback that is called when the request is completed. Required on the client.
+ * @locus Anywhere                                                                                                  //
+ */                                                                                                                 //
+HTTP.patch = function () /* varargs */{                                                                             // 93
+  return HTTP.call.apply(this, ["PATCH"].concat(_.toArray(arguments)));                                             // 94
+};                                                                                                                  // 95
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-}).call(this);
-
-
-
-
-
-
-(function () {
+},"httpcall_server.js":function(require,exports,module){
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //                                                                                                                  //
@@ -116,131 +133,116 @@ HTTP.del = function (/* varargs */) {                                           
 var path = Npm.require('path');                                                                                     // 1
 var request = Npm.require('request');                                                                               // 2
 var url_util = Npm.require('url');                                                                                  // 3
-                                                                                                                    // 4
+                                                                                                                    //
 HTTPInternals = {                                                                                                   // 5
   NpmModules: {                                                                                                     // 6
     request: {                                                                                                      // 7
       version: Npm.require('request/package.json').version,                                                         // 8
       module: request                                                                                               // 9
-    }                                                                                                               // 10
-  }                                                                                                                 // 11
-};                                                                                                                  // 12
-                                                                                                                    // 13
+    }                                                                                                               // 7
+  }                                                                                                                 // 6
+};                                                                                                                  // 5
+                                                                                                                    //
 // _call always runs asynchronously; HTTP.call, defined below,                                                      // 14
 // wraps _call and runs synchronously when no callback is provided.                                                 // 15
-var _call = function(method, url, options, callback) {                                                              // 16
-                                                                                                                    // 17
+var _call = function _call(method, url, options, callback) {                                                        // 16
+                                                                                                                    //
   ////////// Process arguments //////////                                                                           // 18
-                                                                                                                    // 19
-  if (! callback && typeof options === "function") {                                                                // 20
+                                                                                                                    //
+  if (!callback && typeof options === "function") {                                                                 // 20
     // support (method, url, callback) argument list                                                                // 21
     callback = options;                                                                                             // 22
     options = null;                                                                                                 // 23
   }                                                                                                                 // 24
-                                                                                                                    // 25
+                                                                                                                    //
   options = options || {};                                                                                          // 26
-                                                                                                                    // 27
-  method = (method || "").toUpperCase();                                                                            // 28
-                                                                                                                    // 29
-  if (! /^https?:\/\//.test(url))                                                                                   // 30
-    throw new Error("url must be absolute and start with http:// or https://");                                     // 31
-                                                                                                                    // 32
-  var headers = {};                                                                                                 // 33
-                                                                                                                    // 34
-  var content = options.content;                                                                                    // 35
-  if (options.data) {                                                                                               // 36
-    content = JSON.stringify(options.data);                                                                         // 37
-    headers['Content-Type'] = 'application/json';                                                                   // 38
-  }                                                                                                                 // 39
-                                                                                                                    // 40
-                                                                                                                    // 41
-  var paramsForUrl, paramsForBody;                                                                                  // 42
-  if (content || method === "GET" || method === "HEAD")                                                             // 43
-    paramsForUrl = options.params;                                                                                  // 44
-  else                                                                                                              // 45
-    paramsForBody = options.params;                                                                                 // 46
-                                                                                                                    // 47
-  var newUrl = URL._constructUrl(url, options.query, paramsForUrl);                                                 // 48
-                                                                                                                    // 49
-  if (options.auth) {                                                                                               // 50
-    if (options.auth.indexOf(':') < 0)                                                                              // 51
-      throw new Error('auth option should be of the form "username:password"');                                     // 52
-    headers['Authorization'] = "Basic "+                                                                            // 53
-      (new Buffer(options.auth, "ascii")).toString("base64");                                                       // 54
-  }                                                                                                                 // 55
-                                                                                                                    // 56
-  if (paramsForBody) {                                                                                              // 57
-    content = URL._encodeParams(paramsForBody);                                                                     // 58
-    headers['Content-Type'] = "application/x-www-form-urlencoded";                                                  // 59
-  }                                                                                                                 // 60
-                                                                                                                    // 61
-  _.extend(headers, options.headers || {});                                                                         // 62
-                                                                                                                    // 63
-  // wrap callback to add a 'response' property on an error, in case                                                // 64
-  // we have both (http 4xx/5xx error, which has a response payload)                                                // 65
-  callback = (function(callback) {                                                                                  // 66
-    return function(error, response) {                                                                              // 67
-      if (error && response)                                                                                        // 68
-        error.response = response;                                                                                  // 69
-      callback(error, response);                                                                                    // 70
-    };                                                                                                              // 71
-  })(callback);                                                                                                     // 72
-                                                                                                                    // 73
-  // safety belt: only call the callback once.                                                                      // 74
-  callback = _.once(callback);                                                                                      // 75
-                                                                                                                    // 76
-                                                                                                                    // 77
-  ////////// Kickoff! //////////                                                                                    // 78
-                                                                                                                    // 79
-  // Allow users to override any request option with the npmRequestOptions                                          // 80
-  // option.                                                                                                        // 81
-  var reqOptions = _.extend({                                                                                       // 82
-    url: newUrl,                                                                                                    // 83
-    method: method,                                                                                                 // 84
-    encoding: "utf8",                                                                                               // 85
-    jar: false,                                                                                                     // 86
-    timeout: options.timeout,                                                                                       // 87
-    body: content,                                                                                                  // 88
-    followRedirect: options.followRedirects,                                                                        // 89
-    // Follow redirects on non-GET requests                                                                         // 90
-    // also. (https://github.com/meteor/meteor/issues/2808)                                                         // 91
-    followAllRedirects: options.followRedirects,                                                                    // 92
-    headers: headers                                                                                                // 93
-  }, options.npmRequestOptions || {});                                                                              // 94
-                                                                                                                    // 95
-  request(reqOptions, function(error, res, body) {                                                                  // 96
-    var response = null;                                                                                            // 97
-                                                                                                                    // 98
-    if (! error) {                                                                                                  // 99
-                                                                                                                    // 100
-      response = {};                                                                                                // 101
-      response.statusCode = res.statusCode;                                                                         // 102
-      response.content = body;                                                                                      // 103
-      response.headers = res.headers;                                                                               // 104
-                                                                                                                    // 105
-      populateData(response);                                                                                       // 106
-                                                                                                                    // 107
-      if (response.statusCode >= 400)                                                                               // 108
-        error = makeErrorByStatus(response.statusCode, response.content);                                           // 109
-    }                                                                                                               // 110
-                                                                                                                    // 111
-    callback(error, response);                                                                                      // 112
-                                                                                                                    // 113
-  });                                                                                                               // 114
-};                                                                                                                  // 115
-                                                                                                                    // 116
-HTTP.call = Meteor.wrapAsync(_call);                                                                                // 117
-                                                                                                                    // 118
+                                                                                                                    //
+  if (_.has(options, 'beforeSend')) {                                                                               // 28
+    throw new Error("Option beforeSend not supported on server.");                                                  // 29
+  }                                                                                                                 // 30
+                                                                                                                    //
+  method = (method || "").toUpperCase();                                                                            // 32
+                                                                                                                    //
+  if (!/^https?:\/\//.test(url)) throw new Error("url must be absolute and start with http:// or https://");        // 34
+                                                                                                                    //
+  var headers = {};                                                                                                 // 37
+                                                                                                                    //
+  var content = options.content;                                                                                    // 39
+  if (options.data) {                                                                                               // 40
+    content = JSON.stringify(options.data);                                                                         // 41
+    headers['Content-Type'] = 'application/json';                                                                   // 42
+  }                                                                                                                 // 43
+                                                                                                                    //
+  var paramsForUrl, paramsForBody;                                                                                  // 46
+  if (content || method === "GET" || method === "HEAD") paramsForUrl = options.params;else paramsForBody = options.params;
+                                                                                                                    //
+  var newUrl = URL._constructUrl(url, options.query, paramsForUrl);                                                 // 52
+                                                                                                                    //
+  if (options.auth) {                                                                                               // 54
+    if (options.auth.indexOf(':') < 0) throw new Error('auth option should be of the form "username:password"');    // 55
+    headers['Authorization'] = "Basic " + new Buffer(options.auth, "ascii").toString("base64");                     // 57
+  }                                                                                                                 // 59
+                                                                                                                    //
+  if (paramsForBody) {                                                                                              // 61
+    content = URL._encodeParams(paramsForBody);                                                                     // 62
+    headers['Content-Type'] = "application/x-www-form-urlencoded";                                                  // 63
+  }                                                                                                                 // 64
+                                                                                                                    //
+  _.extend(headers, options.headers || {});                                                                         // 66
+                                                                                                                    //
+  // wrap callback to add a 'response' property on an error, in case                                                // 68
+  // we have both (http 4xx/5xx error, which has a response payload)                                                // 69
+  callback = function (callback) {                                                                                  // 70
+    return function (error, response) {                                                                             // 71
+      if (error && response) error.response = response;                                                             // 72
+      callback(error, response);                                                                                    // 74
+    };                                                                                                              // 75
+  }(callback);                                                                                                      // 76
+                                                                                                                    //
+  // safety belt: only call the callback once.                                                                      // 78
+  callback = _.once(callback);                                                                                      // 79
+                                                                                                                    //
+  ////////// Kickoff! //////////                                                                                    // 82
+                                                                                                                    //
+  // Allow users to override any request option with the npmRequestOptions                                          // 84
+  // option.                                                                                                        // 85
+  var reqOptions = _.extend({                                                                                       // 86
+    url: newUrl,                                                                                                    // 87
+    method: method,                                                                                                 // 88
+    encoding: "utf8",                                                                                               // 89
+    jar: false,                                                                                                     // 90
+    timeout: options.timeout,                                                                                       // 91
+    body: content,                                                                                                  // 92
+    followRedirect: options.followRedirects,                                                                        // 93
+    // Follow redirects on non-GET requests                                                                         // 94
+    // also. (https://github.com/meteor/meteor/issues/2808)                                                         // 95
+    followAllRedirects: options.followRedirects,                                                                    // 96
+    headers: headers                                                                                                // 97
+  }, options.npmRequestOptions || {});                                                                              // 86
+                                                                                                                    //
+  request(reqOptions, function (error, res, body) {                                                                 // 100
+    var response = null;                                                                                            // 101
+                                                                                                                    //
+    if (!error) {                                                                                                   // 103
+                                                                                                                    //
+      response = {};                                                                                                // 105
+      response.statusCode = res.statusCode;                                                                         // 106
+      response.content = body;                                                                                      // 107
+      response.headers = res.headers;                                                                               // 108
+                                                                                                                    //
+      populateData(response);                                                                                       // 110
+                                                                                                                    //
+      if (response.statusCode >= 400) error = makeErrorByStatus(response.statusCode, response.content);             // 112
+    }                                                                                                               // 114
+                                                                                                                    //
+    callback(error, response);                                                                                      // 116
+  });                                                                                                               // 118
+};                                                                                                                  // 119
+                                                                                                                    //
+HTTP.call = Meteor.wrapAsync(_call);                                                                                // 121
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-}).call(this);
-
-
-
-
-
-
-(function () {
+},"deprecated.js":function(){
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //                                                                                                                  //
@@ -251,18 +253,22 @@ HTTP.call = Meteor.wrapAsync(_call);                                            
 // The HTTP object used to be called Meteor.http.                                                                   // 1
 // XXX COMPAT WITH 0.6.4                                                                                            // 2
 Meteor.http = HTTP;                                                                                                 // 3
-                                                                                                                    // 4
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-}).call(this);
-
+}}}}},{"extensions":[".js",".json"]});
+require("./node_modules/meteor/http/httpcall_common.js");
+require("./node_modules/meteor/http/httpcall_server.js");
+require("./node_modules/meteor/http/deprecated.js");
 
 /* Exports */
 if (typeof Package === 'undefined') Package = {};
-Package.http = {
+(function (pkg, symbols) {
+  for (var s in symbols)
+    (s in pkg) || (pkg[s] = symbols[s]);
+})(Package.http = {}, {
   HTTP: HTTP,
   HTTPInternals: HTTPInternals
-};
+});
 
 })();
 

@@ -3,13 +3,13 @@ Template.__checkName("yaksList");
 Template["yaksList"] = new Template("Template.yaksList", (function() {
   var view = this;
   return HTML.DIV({
-    "class": "yaks"
+    class: "yaks"
   }, "\n    ", HTML.DIV({
-    "class": "form-style"
+    class: "form-style"
   }, "\n      ", HTML.DIV({
-    "class": "container"
+    class: "container"
   }, "\n        ", HTML.UL({
-    "class": "list-group"
+    class: "list-group"
   }, "\n          ", Blaze.Each(function() {
     return Spacebars.call(view.lookup("yaks"));
   }, function() {
@@ -17,4 +17,4 @@ Template["yaksList"] = new Template("Template.yaksList", (function() {
   }), "\n        "), "\n      "), "\n    "), "\n  ");
 }));
 
-})();
+}).call(this);

@@ -2,15 +2,8 @@
 //                                                                      //
 // This is a generated file. You can view the original                  //
 // source in your browser if your browser supports source maps.         //
-//                                                                      //
-// If you are using Chrome, open the Developer Tools and click the gear //
-// icon in its lower right corner. In the General Settings panel, turn  //
-// on 'Enable source maps'.                                             //
-//                                                                      //
-// If you are using Firefox 23, go to `about:config` and set the        //
-// `devtools.debugger.source-maps-enabled` preference to true.          //
-// (The preference should be on by default in Firefox 24; versions      //
-// older than 23 do not support source maps.)                           //
+// Source maps are supported by all recent versions of Chrome, Safari,  //
+// and Firefox, and by Internet Explorer 11.                            //
 //                                                                      //
 //////////////////////////////////////////////////////////////////////////
 
@@ -19,6 +12,8 @@
 
 /* Imports */
 var Meteor = Package.meteor.Meteor;
+var global = Package.meteor.global;
+var meteorEnv = Package.meteor.meteorEnv;
 var Blaze = Package.ui.Blaze;
 var UI = Package.ui.UI;
 var Handlebars = Package.ui.Handlebars;
@@ -28,19 +23,20 @@ var jQuery = Package.jquery.jQuery;
 var Tracker = Package.tracker.Tracker;
 var Deps = Package.tracker.Deps;
 var ReactiveVar = Package['reactive-var'].ReactiveVar;
-var Template = Package.templating.Template;
+var Template = Package['templating-runtime'].Template;
 var Random = Package.random.Random;
 var Iron = Package['iron:core'].Iron;
 var HTML = Package.htmljs.HTML;
+var Spacebars = Package.spacebars.Spacebars;
 
 /* Package-scope variables */
 var DynamicTemplate;
 
-(function () {
+(function(){
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //                                                                                                                //
-// packages/iron:dynamic-template/version_conflict_error.js                                                       //
+// packages/iron_dynamic-template/version_conflict_error.js                                                       //
 //                                                                                                                //
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
                                                                                                                   //
@@ -73,11 +69,11 @@ if (Package['cmather:iron-dynamic-template']) {                                 
 
 
 
-(function () {
+(function(){
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //                                                                                                                //
-// packages/iron:dynamic-template/template.dynamic_template.js                                                    //
+// packages/iron_dynamic-template/template.dynamic_template.js                                                    //
 //                                                                                                                //
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
                                                                                                                   //
@@ -101,11 +97,11 @@ Template["__DynamicTemplateError__"] = new Template("Template.__DynamicTemplateE
 
 
 
-(function () {
+(function(){
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //                                                                                                                //
-// packages/iron:dynamic-template/dynamic_template.js                                                             //
+// packages/iron_dynamic-template/dynamic_template.js                                                             //
 //                                                                                                                //
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
                                                                                                                   //
@@ -514,7 +510,7 @@ DynamicTemplate.prototype.insert = function (options) {                         
   var $el = $(el);                                                                                                // 403
                                                                                                                   // 404
   if ($el.length === 0)                                                                                           // 405
-    throw new Error("No element to insert layout into. Is your element defined? Try a Meteor.startup callback."); // 406
+    throw new Error("No element to insert layout into. Is your element defined? Try a Meteor.startup callback.");
                                                                                                                   // 407
   if (!this.view)                                                                                                 // 408
     this.create(options);                                                                                         // 409
@@ -735,11 +731,11 @@ Iron.DynamicTemplate = DynamicTemplate;                                         
 
 
 
-(function () {
+(function(){
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //                                                                                                                //
-// packages/iron:dynamic-template/blaze_overrides.js                                                              //
+// packages/iron_dynamic-template/blaze_overrides.js                                                              //
 //                                                                                                                //
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
                                                                                                                   //

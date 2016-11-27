@@ -2,15 +2,8 @@
 //                                                                      //
 // This is a generated file. You can view the original                  //
 // source in your browser if your browser supports source maps.         //
-//                                                                      //
-// If you are using Chrome, open the Developer Tools and click the gear //
-// icon in its lower right corner. In the General Settings panel, turn  //
-// on 'Enable source maps'.                                             //
-//                                                                      //
-// If you are using Firefox 23, go to `about:config` and set the        //
-// `devtools.debugger.source-maps-enabled` preference to true.          //
-// (The preference should be on by default in Firefox 24; versions      //
-// older than 23 do not support source maps.)                           //
+// Source maps are supported by all recent versions of Chrome, Safari,  //
+// and Firefox, and by Internet Explorer 11.                            //
 //                                                                      //
 //////////////////////////////////////////////////////////////////////////
 
@@ -19,13 +12,15 @@
 
 /* Imports */
 var Meteor = Package.meteor.Meteor;
+var global = Package.meteor.global;
+var meteorEnv = Package.meteor.meteorEnv;
 var Tracker = Package.tracker.Tracker;
 var Deps = Package.tracker.Deps;
 
 /* Package-scope variables */
 var HTML, IDENTITY, SLICE;
 
-(function () {
+(function(){
 
 ////////////////////////////////////////////////////////////////////////////////////////
 //                                                                                    //
@@ -47,7 +42,7 @@ SLICE = Array.prototype.slice;                                                  
 
 
 
-(function () {
+(function(){
 
 ////////////////////////////////////////////////////////////////////////////////////////
 //                                                                                    //
@@ -139,8 +134,8 @@ HTML.Visitor.def({                                                              
   visitObject: function (obj/*, ...*/) {                                              // 82
     throw new Error("Unexpected object in htmljs: " + obj);                           // 83
   },                                                                                  // 84
-  visitFunction: function (obj/*, ...*/) {                                            // 85
-    throw new Error("Unexpected function in htmljs: " + obj);                         // 86
+  visitFunction: function (fn/*, ...*/) {                                             // 85
+    throw new Error("Unexpected function in htmljs: " + fn);                          // 86
   }                                                                                   // 87
 });                                                                                   // 88
                                                                                       // 89
@@ -396,7 +391,7 @@ HTML.ToHTMLVisitor.def({                                                        
 
 
 
-(function () {
+(function(){
 
 ////////////////////////////////////////////////////////////////////////////////////////
 //                                                                                    //
@@ -474,7 +469,7 @@ var Attrs = HTML.Attrs = function (/*attrs dictionaries*/) {                    
 HTML.getTag = function (tagName) {                                                    // 68
   var symbolName = HTML.getSymbolName(tagName);                                       // 69
   if (symbolName === tagName) // all-caps tagName                                     // 70
-    throw new Error("Use the lowercase or camelCase form of '" + tagName + "' here"); // 71
+    throw new Error("Use the lowercase or camelCase form of '" + tagName + "' here");
                                                                                       // 72
   if (! HTML[symbolName])                                                             // 73
     HTML[symbolName] = makeTagConstructor(tagName);                                   // 74
@@ -498,7 +493,7 @@ HTML.getSymbolName = function (tagName) {                                       
 HTML.knownElementNames = 'a abbr acronym address applet area article aside audio b base basefont bdi bdo big blockquote body br button canvas caption center cite code col colgroup command data datagrid datalist dd del details dfn dir div dl dt em embed eventsource fieldset figcaption figure font footer form frame frameset h1 h2 h3 h4 h5 h6 head header hgroup hr html i iframe img input ins isindex kbd keygen label legend li link main map mark menu meta meter nav noframes noscript object ol optgroup option output p param pre progress q rp rt ruby s samp script section select small source span strike strong style sub summary sup table tbody td textarea tfoot th thead time title tr track tt u ul var video wbr'.split(' ');
 // (we add the SVG ones below)                                                        // 93
                                                                                       // 94
-HTML.knownSVGElementNames = 'altGlyph altGlyphDef altGlyphItem animate animateColor animateMotion animateTransform circle clipPath color-profile cursor defs desc ellipse feBlend feColorMatrix feComponentTransfer feComposite feConvolveMatrix feDiffuseLighting feDisplacementMap feDistantLight feFlood feFuncA feFuncB feFuncG feFuncR feGaussianBlur feImage feMerge feMergeNode feMorphology feOffset fePointLight feSpecularLighting feSpotLight feTile feTurbulence filter font font-face font-face-format font-face-name font-face-src font-face-uri foreignObject g glyph glyphRef hkern image line linearGradient marker mask metadata missing-glyph path pattern polygon polyline radialGradient rect script set stop style svg switch symbol text textPath title tref tspan use view vkern'.split(' ');
+HTML.knownSVGElementNames = 'altGlyph altGlyphDef altGlyphItem animate animateColor animateMotion animateTransform circle clipPath color-profile cursor defs desc ellipse feBlend feColorMatrix feComponentTransfer feComposite feConvolveMatrix feDiffuseLighting feDisplacementMap feDistantLight feFlood feFuncA feFuncB feFuncG feFuncR feGaussianBlur feImage feMerge feMergeNode feMorphology feOffset fePointLight feSpecularLighting feSpotLight feTile feTurbulence filter font font-face font-face-format font-face-name font-face-src font-face-uri foreignObject g glyph glyphRef hkern image line linearGradient marker mask metadata missing-glyph path pattern polygon polyline radialGradient rect set stop style svg switch symbol text textPath title tref tspan use view vkern'.split(' ');
 // Append SVG element names to list of known element names                            // 96
 HTML.knownElementNames = HTML.knownElementNames.concat(HTML.knownSVGElementNames);    // 97
                                                                                       // 98
@@ -584,87 +579,95 @@ HTML.isArray = function (x) {                                                   
 };                                                                                    // 178
                                                                                       // 179
 HTML.isConstructedObject = function (x) {                                             // 180
-  return (x && (typeof x === 'object') &&                                             // 181
-          (x.constructor !== Object) &&                                               // 182
-          (! Object.prototype.hasOwnProperty.call(x, 'constructor')));                // 183
-};                                                                                    // 184
-                                                                                      // 185
-HTML.isNully = function (node) {                                                      // 186
-  if (node == null)                                                                   // 187
-    // null or undefined                                                              // 188
-    return true;                                                                      // 189
-                                                                                      // 190
-  if (HTML.isArray(node)) {                                                           // 191
-    // is it an empty array or an array of all nully items?                           // 192
-    for (var i = 0; i < node.length; i++)                                             // 193
-      if (! HTML.isNully(node[i]))                                                    // 194
-        return false;                                                                 // 195
-    return true;                                                                      // 196
-  }                                                                                   // 197
+  // Figure out if `x` is "an instance of some class" or just a plain                 // 181
+  // object literal.  It correctly treats an object literal like                      // 182
+  // `{ constructor: ... }` as an object literal.  It won't detect                    // 183
+  // instances of classes that lack a `constructor` property (e.g.                    // 184
+  // if you assign to a prototype when setting up the class as in:                    // 185
+  // `Foo = function () { ... }; Foo.prototype = { ... }`, then                       // 186
+  // `(new Foo).constructor` is `Object`, not `Foo`).                                 // 187
+  return (x && (typeof x === 'object') &&                                             // 188
+          (x.constructor !== Object) &&                                               // 189
+          (typeof x.constructor === 'function') &&                                    // 190
+          (x instanceof x.constructor));                                              // 191
+};                                                                                    // 192
+                                                                                      // 193
+HTML.isNully = function (node) {                                                      // 194
+  if (node == null)                                                                   // 195
+    // null or undefined                                                              // 196
+    return true;                                                                      // 197
                                                                                       // 198
-  return false;                                                                       // 199
-};                                                                                    // 200
-                                                                                      // 201
-HTML.isValidAttributeName = function (name) {                                         // 202
-  return /^[:_A-Za-z][:_A-Za-z0-9.\-]*/.test(name);                                   // 203
-};                                                                                    // 204
-                                                                                      // 205
-// If `attrs` is an array of attributes dictionaries, combines them                   // 206
-// into one.  Removes attributes that are "nully."                                    // 207
-HTML.flattenAttributes = function (attrs) {                                           // 208
-  if (! attrs)                                                                        // 209
-    return attrs;                                                                     // 210
-                                                                                      // 211
-  var isArray = HTML.isArray(attrs);                                                  // 212
-  if (isArray && attrs.length === 0)                                                  // 213
-    return null;                                                                      // 214
-                                                                                      // 215
-  var result = {};                                                                    // 216
-  for (var i = 0, N = (isArray ? attrs.length : 1); i < N; i++) {                     // 217
-    var oneAttrs = (isArray ? attrs[i] : attrs);                                      // 218
-    if ((typeof oneAttrs !== 'object') ||                                             // 219
-        HTML.isConstructedObject(oneAttrs))                                           // 220
-      throw new Error("Expected plain JS object as attrs, found: " + oneAttrs);       // 221
-    for (var name in oneAttrs) {                                                      // 222
-      if (! HTML.isValidAttributeName(name))                                          // 223
-        throw new Error("Illegal HTML attribute name: " + name);                      // 224
-      var value = oneAttrs[name];                                                     // 225
-      if (! HTML.isNully(value))                                                      // 226
-        result[name] = value;                                                         // 227
-    }                                                                                 // 228
-  }                                                                                   // 229
-                                                                                      // 230
-  return result;                                                                      // 231
-};                                                                                    // 232
-                                                                                      // 233
-                                                                                      // 234
-                                                                                      // 235
-////////////////////////////// TOHTML                                                 // 236
-                                                                                      // 237
-HTML.toHTML = function (content) {                                                    // 238
-  return (new HTML.ToHTMLVisitor).visit(content);                                     // 239
+  if (HTML.isArray(node)) {                                                           // 199
+    // is it an empty array or an array of all nully items?                           // 200
+    for (var i = 0; i < node.length; i++)                                             // 201
+      if (! HTML.isNully(node[i]))                                                    // 202
+        return false;                                                                 // 203
+    return true;                                                                      // 204
+  }                                                                                   // 205
+                                                                                      // 206
+  return false;                                                                       // 207
+};                                                                                    // 208
+                                                                                      // 209
+HTML.isValidAttributeName = function (name) {                                         // 210
+  return /^[:_A-Za-z][:_A-Za-z0-9.\-]*/.test(name);                                   // 211
+};                                                                                    // 212
+                                                                                      // 213
+// If `attrs` is an array of attributes dictionaries, combines them                   // 214
+// into one.  Removes attributes that are "nully."                                    // 215
+HTML.flattenAttributes = function (attrs) {                                           // 216
+  if (! attrs)                                                                        // 217
+    return attrs;                                                                     // 218
+                                                                                      // 219
+  var isArray = HTML.isArray(attrs);                                                  // 220
+  if (isArray && attrs.length === 0)                                                  // 221
+    return null;                                                                      // 222
+                                                                                      // 223
+  var result = {};                                                                    // 224
+  for (var i = 0, N = (isArray ? attrs.length : 1); i < N; i++) {                     // 225
+    var oneAttrs = (isArray ? attrs[i] : attrs);                                      // 226
+    if ((typeof oneAttrs !== 'object') ||                                             // 227
+        HTML.isConstructedObject(oneAttrs))                                           // 228
+      throw new Error("Expected plain JS object as attrs, found: " + oneAttrs);       // 229
+    for (var name in oneAttrs) {                                                      // 230
+      if (! HTML.isValidAttributeName(name))                                          // 231
+        throw new Error("Illegal HTML attribute name: " + name);                      // 232
+      var value = oneAttrs[name];                                                     // 233
+      if (! HTML.isNully(value))                                                      // 234
+        result[name] = value;                                                         // 235
+    }                                                                                 // 236
+  }                                                                                   // 237
+                                                                                      // 238
+  return result;                                                                      // 239
 };                                                                                    // 240
                                                                                       // 241
-// Escaping modes for outputting text when generating HTML.                           // 242
-HTML.TEXTMODE = {                                                                     // 243
-  STRING: 1,                                                                          // 244
-  RCDATA: 2,                                                                          // 245
-  ATTRIBUTE: 3                                                                        // 246
-};                                                                                    // 247
-                                                                                      // 248
+                                                                                      // 242
+                                                                                      // 243
+////////////////////////////// TOHTML                                                 // 244
+                                                                                      // 245
+HTML.toHTML = function (content) {                                                    // 246
+  return (new HTML.ToHTMLVisitor).visit(content);                                     // 247
+};                                                                                    // 248
                                                                                       // 249
-HTML.toText = function (content, textMode) {                                          // 250
-  if (! textMode)                                                                     // 251
-    throw new Error("textMode required for HTML.toText");                             // 252
-  if (! (textMode === HTML.TEXTMODE.STRING ||                                         // 253
-         textMode === HTML.TEXTMODE.RCDATA ||                                         // 254
-         textMode === HTML.TEXTMODE.ATTRIBUTE))                                       // 255
-    throw new Error("Unknown textMode: " + textMode);                                 // 256
+// Escaping modes for outputting text when generating HTML.                           // 250
+HTML.TEXTMODE = {                                                                     // 251
+  STRING: 1,                                                                          // 252
+  RCDATA: 2,                                                                          // 253
+  ATTRIBUTE: 3                                                                        // 254
+};                                                                                    // 255
+                                                                                      // 256
                                                                                       // 257
-  var visitor = new HTML.ToTextVisitor({textMode: textMode});;                        // 258
-  return visitor.visit(content);                                                      // 259
-};                                                                                    // 260
-                                                                                      // 261
+HTML.toText = function (content, textMode) {                                          // 258
+  if (! textMode)                                                                     // 259
+    throw new Error("textMode required for HTML.toText");                             // 260
+  if (! (textMode === HTML.TEXTMODE.STRING ||                                         // 261
+         textMode === HTML.TEXTMODE.RCDATA ||                                         // 262
+         textMode === HTML.TEXTMODE.ATTRIBUTE))                                       // 263
+    throw new Error("Unknown textMode: " + textMode);                                 // 264
+                                                                                      // 265
+  var visitor = new HTML.ToTextVisitor({textMode: textMode});;                        // 266
+  return visitor.visit(content);                                                      // 267
+};                                                                                    // 268
+                                                                                      // 269
 ////////////////////////////////////////////////////////////////////////////////////////
 
 }).call(this);
@@ -672,8 +675,11 @@ HTML.toText = function (content, textMode) {                                    
 
 /* Exports */
 if (typeof Package === 'undefined') Package = {};
-Package.htmljs = {
+(function (pkg, symbols) {
+  for (var s in symbols)
+    (s in pkg) || (pkg[s] = symbols[s]);
+})(Package.htmljs = {}, {
   HTML: HTML
-};
+});
 
 })();

@@ -2,15 +2,8 @@
 //                                                                      //
 // This is a generated file. You can view the original                  //
 // source in your browser if your browser supports source maps.         //
-//                                                                      //
-// If you are using Chrome, open the Developer Tools and click the gear //
-// icon in its lower right corner. In the General Settings panel, turn  //
-// on 'Enable source maps'.                                             //
-//                                                                      //
-// If you are using Firefox 23, go to `about:config` and set the        //
-// `devtools.debugger.source-maps-enabled` preference to true.          //
-// (The preference should be on by default in Firefox 24; versions      //
-// older than 23 do not support source maps.)                           //
+// Source maps are supported by all recent versions of Chrome, Safari,  //
+// and Firefox, and by Internet Explorer 11.                            //
 //                                                                      //
 //////////////////////////////////////////////////////////////////////////
 
@@ -19,17 +12,19 @@
 
 /* Imports */
 var Meteor = Package.meteor.Meteor;
+var global = Package.meteor.global;
+var meteorEnv = Package.meteor.meteorEnv;
 var Tracker = Package.tracker.Tracker;
 var Deps = Package.tracker.Deps;
 var Retry = Package.retry.Retry;
-var DDP = Package.ddp.DDP;
+var DDP = Package['ddp-client'].DDP;
 var Mongo = Package.mongo.Mongo;
 var _ = Package.underscore._;
 
 /* Package-scope variables */
-var Autoupdate, ClientVersions;
+var ClientVersions, Autoupdate;
 
-(function () {
+(function(){
 
 /////////////////////////////////////////////////////////////////////////////////////////////
 //                                                                                         //
@@ -80,116 +75,120 @@ Autoupdate.newClientAvailable = function () {                                   
                _id: "version-refreshable",                                                 // 41
                version: {$ne: autoupdateVersionRefreshable} });                            // 42
 };                                                                                         // 43
-                                                                                           // 44
-var knownToSupportCssOnLoad = false;                                                       // 45
-                                                                                           // 46
-var retry = new Retry({                                                                    // 47
-  // Unlike the stream reconnect use of Retry, which we want to be instant                 // 48
-  // in normal operation, this is a wacky failure. We don't want to retry                  // 49
-  // right away, we can start slowly.                                                      // 50
-  //                                                                                       // 51
-  // A better way than timeconstants here might be to use the knowledge                    // 52
-  // of when we reconnect to help trigger these retries. Typically, the                    // 53
-  // server fixing code will result in a restart and reconnect, but                        // 54
-  // potentially the subscription could have a transient error.                            // 55
-  minCount: 0, // don't do any immediate retries                                           // 56
-  baseTimeout: 30*1000 // start with 30s                                                   // 57
-});                                                                                        // 58
-var failures = 0;                                                                          // 59
-                                                                                           // 60
-Autoupdate._retrySubscription = function () {                                              // 61
-  Meteor.subscribe("meteor_autoupdate_clientVersions", {                                   // 62
-    onError: function (error) {                                                            // 63
-      Meteor._debug("autoupdate subscription failed:", error);                             // 64
-      failures++;                                                                          // 65
-      retry.retryLater(failures, function () {                                             // 66
-        // Just retry making the subscription, don't reload the whole                      // 67
-        // page. While reloading would catch more cases (for example,                      // 68
-        // the server went back a version and is now doing old-style hot                   // 69
-        // code push), it would also be more prone to reload loops,                        // 70
-        // which look really bad to the user. Just retrying the                            // 71
-        // subscription over DDP means it is at least possible to fix by                   // 72
-        // updating the server.                                                            // 73
-        Autoupdate._retrySubscription();                                                   // 74
-      });                                                                                  // 75
-    },                                                                                     // 76
-    onReady: function () {                                                                 // 77
-      if (Package.reload) {                                                                // 78
-        var checkNewVersionDocument = function (doc) {                                     // 79
-          var self = this;                                                                 // 80
-          if (doc._id === 'version-refreshable' &&                                         // 81
-              doc.version !== autoupdateVersionRefreshable) {                              // 82
-            autoupdateVersionRefreshable = doc.version;                                    // 83
-            // Switch out old css links for the new css links. Inspired by:                // 84
-            // https://github.com/guard/guard-livereload/blob/master/js/livereload.js#L710 // 85
-            var newCss = (doc.assets && doc.assets.allCss) || [];                          // 86
-            var oldLinks = [];                                                             // 87
-            _.each(document.getElementsByTagName('link'), function (link) {                // 88
-              if (link.className === '__meteor-css__') {                                   // 89
-                oldLinks.push(link);                                                       // 90
-              }                                                                            // 91
-            });                                                                            // 92
-                                                                                           // 93
-            var waitUntilCssLoads = function  (link, callback) {                           // 94
-              var executeCallback = _.once(callback);                                      // 95
-              link.onload = function () {                                                  // 96
-                knownToSupportCssOnLoad = true;                                            // 97
-                executeCallback();                                                         // 98
-              };                                                                           // 99
-              if (! knownToSupportCssOnLoad) {                                             // 100
-                var id = Meteor.setInterval(function () {                                  // 101
-                  if (link.sheet) {                                                        // 102
-                    executeCallback();                                                     // 103
-                    Meteor.clearInterval(id);                                              // 104
-                  }                                                                        // 105
-                }, 50);                                                                    // 106
-              }                                                                            // 107
-            };                                                                             // 108
-                                                                                           // 109
-            var removeOldLinks = _.after(newCss.length, function () {                      // 110
-              _.each(oldLinks, function (oldLink) {                                        // 111
-                oldLink.parentNode.removeChild(oldLink);                                   // 112
-              });                                                                          // 113
-            });                                                                            // 114
-                                                                                           // 115
-            var attachStylesheetLink = function (newLink) {                                // 116
-              document.getElementsByTagName("head").item(0).appendChild(newLink);          // 117
-                                                                                           // 118
-              waitUntilCssLoads(newLink, function () {                                     // 119
-                Meteor.setTimeout(removeOldLinks, 200);                                    // 120
-              });                                                                          // 121
-            };                                                                             // 122
-                                                                                           // 123
-            if (newCss.length !== 0) {                                                     // 124
-              _.each(newCss, function (css) {                                              // 125
-                var newLink = document.createElement("link");                              // 126
-                newLink.setAttribute("rel", "stylesheet");                                 // 127
-                newLink.setAttribute("type", "text/css");                                  // 128
-                newLink.setAttribute("class", "__meteor-css__");                           // 129
-                newLink.setAttribute("href", Meteor._relativeToSiteRootUrl(css.url));      // 130
-                attachStylesheetLink(newLink);                                             // 131
-              });                                                                          // 132
-            } else {                                                                       // 133
-              removeOldLinks();                                                            // 134
-            }                                                                              // 135
-                                                                                           // 136
-          }                                                                                // 137
-          else if (doc._id === 'version' && doc.version !== autoupdateVersion) {           // 138
-            handle && handle.stop();                                                       // 139
-            Package.reload.Reload._reload();                                               // 140
-          }                                                                                // 141
-        };                                                                                 // 142
-                                                                                           // 143
-        var handle = ClientVersions.find().observe({                                       // 144
-          added: checkNewVersionDocument,                                                  // 145
-          changed: checkNewVersionDocument                                                 // 146
-        });                                                                                // 147
-      }                                                                                    // 148
-    }                                                                                      // 149
-  });                                                                                      // 150
-};                                                                                         // 151
-Autoupdate._retrySubscription();                                                           // 152
-                                                                                           // 153
+Autoupdate._ClientVersions = ClientVersions;  // Used by a self-test                       // 44
+                                                                                           // 45
+var knownToSupportCssOnLoad = false;                                                       // 46
+                                                                                           // 47
+var retry = new Retry({                                                                    // 48
+  // Unlike the stream reconnect use of Retry, which we want to be instant                 // 49
+  // in normal operation, this is a wacky failure. We don't want to retry                  // 50
+  // right away, we can start slowly.                                                      // 51
+  //                                                                                       // 52
+  // A better way than timeconstants here might be to use the knowledge                    // 53
+  // of when we reconnect to help trigger these retries. Typically, the                    // 54
+  // server fixing code will result in a restart and reconnect, but                        // 55
+  // potentially the subscription could have a transient error.                            // 56
+  minCount: 0, // don't do any immediate retries                                           // 57
+  baseTimeout: 30*1000 // start with 30s                                                   // 58
+});                                                                                        // 59
+var failures = 0;                                                                          // 60
+                                                                                           // 61
+Autoupdate._retrySubscription = function () {                                              // 62
+  Meteor.subscribe("meteor_autoupdate_clientVersions", {                                   // 63
+    onError: function (error) {                                                            // 64
+      Meteor._debug("autoupdate subscription failed:", error);                             // 65
+      failures++;                                                                          // 66
+      retry.retryLater(failures, function () {                                             // 67
+        // Just retry making the subscription, don't reload the whole                      // 68
+        // page. While reloading would catch more cases (for example,                      // 69
+        // the server went back a version and is now doing old-style hot                   // 70
+        // code push), it would also be more prone to reload loops,                        // 71
+        // which look really bad to the user. Just retrying the                            // 72
+        // subscription over DDP means it is at least possible to fix by                   // 73
+        // updating the server.                                                            // 74
+        Autoupdate._retrySubscription();                                                   // 75
+      });                                                                                  // 76
+    },                                                                                     // 77
+    onReady: function () {                                                                 // 78
+      if (Package.reload) {                                                                // 79
+        var checkNewVersionDocument = function (doc) {                                     // 80
+          var self = this;                                                                 // 81
+          if (doc._id === 'version-refreshable' &&                                         // 82
+              doc.version !== autoupdateVersionRefreshable) {                              // 83
+            autoupdateVersionRefreshable = doc.version;                                    // 84
+            // Switch out old css links for the new css links. Inspired by:                // 85
+            // https://github.com/guard/guard-livereload/blob/master/js/livereload.js#L710
+            var newCss = (doc.assets && doc.assets.allCss) || [];                          // 87
+            var oldLinks = [];                                                             // 88
+            _.each(document.getElementsByTagName('link'), function (link) {                // 89
+              if (link.className === '__meteor-css__') {                                   // 90
+                oldLinks.push(link);                                                       // 91
+              }                                                                            // 92
+            });                                                                            // 93
+                                                                                           // 94
+            var waitUntilCssLoads = function  (link, callback) {                           // 95
+              var executeCallback = _.once(callback);                                      // 96
+              link.onload = function () {                                                  // 97
+                knownToSupportCssOnLoad = true;                                            // 98
+                executeCallback();                                                         // 99
+              };                                                                           // 100
+              if (! knownToSupportCssOnLoad) {                                             // 101
+                var id = Meteor.setInterval(function () {                                  // 102
+                  if (link.sheet) {                                                        // 103
+                    executeCallback();                                                     // 104
+                    Meteor.clearInterval(id);                                              // 105
+                  }                                                                        // 106
+                }, 50);                                                                    // 107
+              }                                                                            // 108
+            };                                                                             // 109
+                                                                                           // 110
+            var removeOldLinks = _.after(newCss.length, function () {                      // 111
+              _.each(oldLinks, function (oldLink) {                                        // 112
+                oldLink.parentNode.removeChild(oldLink);                                   // 113
+              });                                                                          // 114
+            });                                                                            // 115
+                                                                                           // 116
+            var attachStylesheetLink = function (newLink) {                                // 117
+              document.getElementsByTagName("head").item(0).appendChild(newLink);          // 118
+                                                                                           // 119
+              waitUntilCssLoads(newLink, function () {                                     // 120
+                Meteor.setTimeout(removeOldLinks, 200);                                    // 121
+              });                                                                          // 122
+            };                                                                             // 123
+                                                                                           // 124
+            if (newCss.length !== 0) {                                                     // 125
+              _.each(newCss, function (css) {                                              // 126
+                var newLink = document.createElement("link");                              // 127
+                newLink.setAttribute("rel", "stylesheet");                                 // 128
+                newLink.setAttribute("type", "text/css");                                  // 129
+                newLink.setAttribute("class", "__meteor-css__");                           // 130
+                newLink.setAttribute("href", css.url);                                     // 131
+                attachStylesheetLink(newLink);                                             // 132
+              });                                                                          // 133
+            } else {                                                                       // 134
+              removeOldLinks();                                                            // 135
+            }                                                                              // 136
+                                                                                           // 137
+          }                                                                                // 138
+          else if (doc._id === 'version' && doc.version !== autoupdateVersion) {           // 139
+            handle && handle.stop();                                                       // 140
+                                                                                           // 141
+            if (Package.reload) {                                                          // 142
+              Package.reload.Reload._reload();                                             // 143
+            }                                                                              // 144
+          }                                                                                // 145
+        };                                                                                 // 146
+                                                                                           // 147
+        var handle = ClientVersions.find().observe({                                       // 148
+          added: checkNewVersionDocument,                                                  // 149
+          changed: checkNewVersionDocument                                                 // 150
+        });                                                                                // 151
+      }                                                                                    // 152
+    }                                                                                      // 153
+  });                                                                                      // 154
+};                                                                                         // 155
+Autoupdate._retrySubscription();                                                           // 156
+                                                                                           // 157
 /////////////////////////////////////////////////////////////////////////////////////////////
 
 }).call(this);
@@ -197,8 +196,11 @@ Autoupdate._retrySubscription();                                                
 
 /* Exports */
 if (typeof Package === 'undefined') Package = {};
-Package.autoupdate = {
+(function (pkg, symbols) {
+  for (var s in symbols)
+    (s in pkg) || (pkg[s] = symbols[s]);
+})(Package.autoupdate = {}, {
   Autoupdate: Autoupdate
-};
+});
 
 })();

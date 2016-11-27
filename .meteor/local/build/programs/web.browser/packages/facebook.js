@@ -2,15 +2,8 @@
 //                                                                      //
 // This is a generated file. You can view the original                  //
 // source in your browser if your browser supports source maps.         //
-//                                                                      //
-// If you are using Chrome, open the Developer Tools and click the gear //
-// icon in its lower right corner. In the General Settings panel, turn  //
-// on 'Enable source maps'.                                             //
-//                                                                      //
-// If you are using Firefox 23, go to `about:config` and set the        //
-// `devtools.debugger.source-maps-enabled` preference to true.          //
-// (The preference should be on by default in Firefox 24; versions      //
-// older than 23 do not support source maps.)                           //
+// Source maps are supported by all recent versions of Chrome, Safari,  //
+// and Firefox, and by Internet Explorer 11.                            //
 //                                                                      //
 //////////////////////////////////////////////////////////////////////////
 
@@ -19,20 +12,23 @@
 
 /* Imports */
 var Meteor = Package.meteor.Meteor;
+var global = Package.meteor.global;
+var meteorEnv = Package.meteor.meteorEnv;
 var OAuth = Package.oauth.OAuth;
 var Oauth = Package.oauth.Oauth;
-var Template = Package.templating.Template;
+var Template = Package['templating-runtime'].Template;
 var Random = Package.random.Random;
 var ServiceConfiguration = Package['service-configuration'].ServiceConfiguration;
 var Blaze = Package.blaze.Blaze;
 var UI = Package.blaze.UI;
 var Handlebars = Package.blaze.Handlebars;
+var Spacebars = Package.spacebars.Spacebars;
 var HTML = Package.htmljs.HTML;
 
 /* Package-scope variables */
 var Facebook;
 
-(function () {
+(function(){
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////
 //                                                                                                   //
@@ -45,7 +41,7 @@ Template.__checkName("configureLoginServiceDialogForFacebook");                 
 Template["configureLoginServiceDialogForFacebook"] = new Template("Template.configureLoginServiceDialogForFacebook", (function() {
   var view = this;                                                                                   // 4
   return [ HTML.Raw("<p>\n    First, you'll need to register your app on Facebook. Follow these steps:\n  </p>\n  "), HTML.OL("\n    ", HTML.Raw('<li>\n      Visit <a href="https://developers.facebook.com/apps" target="_blank">https://developers.facebook.com/apps</a>\n    </li>'), "\n    ", HTML.Raw('<li>\n      Click "Add a New App".\n    </li>'), "\n    ", HTML.Raw('<li>\n      Select "Website" and type a name for your app.\n    </li>'), "\n    ", HTML.Raw('<li>\n      Click "Create New Facebook App ID".\n    </li>'), "\n    ", HTML.Raw('<li>\n      Select a category in the dropdown and click "Create App ID".\n    </li>'), "\n    ", HTML.LI('\n      Under "Tell us about your website", set Site URL to: ', HTML.SPAN({
-    "class": "url"                                                                                   // 6
+    class: "url"                                                                                     // 6
   }, Blaze.View("lookup:siteUrl", function() {                                                       // 7
     return Spacebars.mustache(view.lookup("siteUrl"));                                               // 8
   })), ' and click "Next".\n    '), "\n    ", HTML.Raw('<li>\n      Click "Skip to Developer Dashboard".\n    </li>'), "\n    ", HTML.Raw('<li>\n      Go to the "Settings" tab and add an email address under "Contact Email". Click "Save Changes".\n    </li>'), "\n    ", HTML.Raw('<li>\n      Go to the "Status &amp; Review" tab and select Yes for "Do you want to make this app and\n      all its live features available to the general public?". Click "Confirm".\n    </li>'), "\n    ", HTML.Raw("<li>\n      Go back to the Dashboard tab.\n    </li>"), "\n  ") ];
@@ -60,7 +56,7 @@ Template["configureLoginServiceDialogForFacebook"] = new Template("Template.conf
 
 
 
-(function () {
+(function(){
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////
 //                                                                                                   //
@@ -90,7 +86,7 @@ Template.configureLoginServiceDialogForFacebook.fields = function () {          
 
 
 
-(function () {
+(function(){
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////
 //                                                                                                   //
@@ -121,7 +117,7 @@ Facebook.requestCredential = function (options, credentialRequestCompleteCallbac
   }                                                                                                  // 21
                                                                                                      // 22
   var credentialToken = Random.secret();                                                             // 23
-  var mobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|Windows Phone/i.test(navigator.userAgent); // 24
+  var mobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|Windows Phone/i.test(navigator.userAgent);
   var display = mobile ? 'touch' : 'popup';                                                          // 25
                                                                                                      // 26
   var scope = "email";                                                                               // 27
@@ -134,17 +130,22 @@ Facebook.requestCredential = function (options, credentialRequestCompleteCallbac
         'https://www.facebook.com/v2.2/dialog/oauth?client_id=' + config.appId +                     // 34
         '&redirect_uri=' + OAuth._redirectUri('facebook', config) +                                  // 35
         '&display=' + display + '&scope=' + scope +                                                  // 36
-        '&state=' + OAuth._stateParam(loginStyle, credentialToken);                                  // 37
+        '&state=' + OAuth._stateParam(loginStyle, credentialToken, options && options.redirectUrl);  // 37
                                                                                                      // 38
-  OAuth.launchLogin({                                                                                // 39
-    loginService: "facebook",                                                                        // 40
-    loginStyle: loginStyle,                                                                          // 41
-    loginUrl: loginUrl,                                                                              // 42
-    credentialRequestCompleteCallback: credentialRequestCompleteCallback,                            // 43
-    credentialToken: credentialToken                                                                 // 44
-  });                                                                                                // 45
-};                                                                                                   // 46
-                                                                                                     // 47
+  // Handle authentication type (e.g. for force login you need authType: "reauthenticate")           // 39
+  if (options && options.auth_type) {                                                                // 40
+    loginUrl += "&auth_type=" + encodeURIComponent(options.auth_type);                               // 41
+  }                                                                                                  // 42
+                                                                                                     // 43
+  OAuth.launchLogin({                                                                                // 44
+    loginService: "facebook",                                                                        // 45
+    loginStyle: loginStyle,                                                                          // 46
+    loginUrl: loginUrl,                                                                              // 47
+    credentialRequestCompleteCallback: credentialRequestCompleteCallback,                            // 48
+    credentialToken: credentialToken                                                                 // 49
+  });                                                                                                // 50
+};                                                                                                   // 51
+                                                                                                     // 52
 ///////////////////////////////////////////////////////////////////////////////////////////////////////
 
 }).call(this);
@@ -152,8 +153,11 @@ Facebook.requestCredential = function (options, credentialRequestCompleteCallbac
 
 /* Exports */
 if (typeof Package === 'undefined') Package = {};
-Package.facebook = {
+(function (pkg, symbols) {
+  for (var s in symbols)
+    (s in pkg) || (pkg[s] = symbols[s]);
+})(Package.facebook = {}, {
   Facebook: Facebook
-};
+});
 
 })();

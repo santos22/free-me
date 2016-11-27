@@ -2,15 +2,8 @@
 //                                                                      //
 // This is a generated file. You can view the original                  //
 // source in your browser if your browser supports source maps.         //
-//                                                                      //
-// If you are using Chrome, open the Developer Tools and click the gear //
-// icon in its lower right corner. In the General Settings panel, turn  //
-// on 'Enable source maps'.                                             //
-//                                                                      //
-// If you are using Firefox 23, go to `about:config` and set the        //
-// `devtools.debugger.source-maps-enabled` preference to true.          //
-// (The preference should be on by default in Firefox 24; versions      //
-// older than 23 do not support source maps.)                           //
+// Source maps are supported by all recent versions of Chrome, Safari,  //
+// and Firefox, and by Internet Explorer 11.                            //
 //                                                                      //
 //////////////////////////////////////////////////////////////////////////
 
@@ -19,25 +12,28 @@
 
 /* Imports */
 var Meteor = Package.meteor.Meteor;
+var global = Package.meteor.global;
+var meteorEnv = Package.meteor.meteorEnv;
 var _ = Package.underscore._;
 var Tracker = Package.tracker.Tracker;
 var Deps = Package.tracker.Deps;
 var ReactiveDict = Package['reactive-dict'].ReactiveDict;
-var Template = Package.templating.Template;
+var Template = Package['templating-runtime'].Template;
 var Iron = Package['iron:core'].Iron;
 var Blaze = Package.blaze.Blaze;
 var UI = Package.blaze.UI;
 var Handlebars = Package.blaze.Handlebars;
+var Spacebars = Package.spacebars.Spacebars;
 var HTML = Package.htmljs.HTML;
 
 /* Package-scope variables */
 var WaitList, Controller;
 
-(function () {
+(function(){
 
 /////////////////////////////////////////////////////////////////////////////////////////////
 //                                                                                         //
-// packages/iron:controller/lib/wait_list.js                                               //
+// packages/iron_controller/lib/wait_list.js                                               //
 //                                                                                         //
 /////////////////////////////////////////////////////////////////////////////////////////////
                                                                                            //
@@ -203,11 +199,11 @@ Iron.WaitList = WaitList;                                                       
 
 
 
-(function () {
+(function(){
 
 /////////////////////////////////////////////////////////////////////////////////////////////
 //                                                                                         //
-// packages/iron:controller/lib/controller.js                                              //
+// packages/iron_controller/lib/controller.js                                              //
 //                                                                                         //
 /////////////////////////////////////////////////////////////////////////////////////////////
                                                                                            //
@@ -319,7 +315,7 @@ var mergeStaticInheritedObjectProperty = function (ctor, prop) {                
   var merge = {};                                                                          // 106
                                                                                            // 107
   if (ctor.__super__)                                                                      // 108
-    _.extend(merge, mergeStaticInheritedObjectProperty(ctor.__super__.constructor, prop)); // 109
+    _.extend(merge, mergeStaticInheritedObjectProperty(ctor.__super__.constructor, prop));
                                                                                            // 110
   return _.has(ctor, prop) ? _.extend(merge, ctor[prop]) : merge;                          // 111
 };                                                                                         // 112
@@ -380,11 +376,11 @@ Iron.Controller = Controller;                                                   
 
 
 
-(function () {
+(function(){
 
 /////////////////////////////////////////////////////////////////////////////////////////////
 //                                                                                         //
-// packages/iron:controller/lib/controller_client.js                                       //
+// packages/iron_controller/lib/controller_client.js                                       //
 //                                                                                         //
 /////////////////////////////////////////////////////////////////////////////////////////////
                                                                                            //

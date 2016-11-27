@@ -5,4 +5,4 @@ Template.body.addContent((function() {
 }));
 Meteor.startup(Template.body.renderToDocument);
 
-})();
+}).call(this);
