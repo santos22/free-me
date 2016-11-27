@@ -2,15 +2,8 @@
 //                                                                      //
 // This is a generated file. You can view the original                  //
 // source in your browser if your browser supports source maps.         //
-//                                                                      //
-// If you are using Chrome, open the Developer Tools and click the gear //
-// icon in its lower right corner. In the General Settings panel, turn  //
-// on 'Enable source maps'.                                             //
-//                                                                      //
-// If you are using Firefox 23, go to `about:config` and set the        //
-// `devtools.debugger.source-maps-enabled` preference to true.          //
-// (The preference should be on by default in Firefox 24; versions      //
-// older than 23 do not support source maps.)                           //
+// Source maps are supported by all recent versions of Chrome, Safari,  //
+// and Firefox, and by Internet Explorer 11.                            //
 //                                                                      //
 //////////////////////////////////////////////////////////////////////////
 
@@ -19,33 +12,28 @@
 
 /* Imports */
 var Meteor = Package.meteor.Meteor;
+var global = Package.meteor.global;
+var meteorEnv = Package.meteor.meteorEnv;
+var meteorInstall = Package.modules.meteorInstall;
+var Buffer = Package.modules.Buffer;
+var process = Package.modules.process;
 
 /* Package-scope variables */
-var GeoJSON, module;
+var GeoJSON;
 
-(function () {
+var require = meteorInstall({"node_modules":{"meteor":{"geojson-utils":{"main.js":["./geojson-utils.js",function(require,exports){
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //                                                                                                         //
-// packages/geojson-utils/pre.js                                                                           //
+// packages/geojson-utils/main.js                                                                          //
 //                                                                                                         //
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////
                                                                                                            //
-// Define an object named exports. This will cause geojson-utils.js to put `gju`                           // 1
-// as a field on it, instead of in the global namespace.  See also post.js.                                // 2
-module = {exports:{}};                                                                                     // 3
-                                                                                                           // 4
-                                                                                                           // 5
+exports.GeoJSON = require("./geojson-utils.js");                                                           // 1
+                                                                                                           // 2
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-}).call(this);
-
-
-
-
-
-
-(function () {
+}],"geojson-utils.js":function(require,exports,module){
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //                                                                                                         //
@@ -303,7 +291,7 @@ module = {exports:{}};                                                          
                                                                                                            // 248
   gju.simplify = function (source, kink) { /* source[] array of geojson points */                          // 249
     /* kink	in metres, kinks above this depth kept  */                                                     // 250
-    /* kink depth is the height of the triangle abc where a-b and b-c are two consecutive line segments */ // 251
+    /* kink depth is the height of the triangle abc where a-b and b-c are two consecutive line segments */
     kink = kink || 20;                                                                                     // 252
     source = source.map(function (o) {                                                                     // 253
       return {                                                                                             // 254
@@ -436,35 +424,16 @@ module = {exports:{}};                                                          
                                                                                                            // 381
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-}).call(this);
-
-
-
-
-
-
-(function () {
-
-/////////////////////////////////////////////////////////////////////////////////////////////////////////////
-//                                                                                                         //
-// packages/geojson-utils/post.js                                                                          //
-//                                                                                                         //
-/////////////////////////////////////////////////////////////////////////////////////////////////////////////
-                                                                                                           //
-// This exports object was created in pre.js.  Now copy the `exports` object                               // 1
-// from it into the package-scope variable `GeoJSON`, which will get exported.                             // 2
-GeoJSON = module.exports;                                                                                  // 3
-                                                                                                           // 4
-                                                                                                           // 5
-/////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-}).call(this);
-
+}}}}},{"extensions":[".js",".json"]});
+var exports = require("./node_modules/meteor/geojson-utils/main.js");
 
 /* Exports */
 if (typeof Package === 'undefined') Package = {};
-Package['geojson-utils'] = {
+(function (pkg, symbols) {
+  for (var s in symbols)
+    (s in pkg) || (pkg[s] = symbols[s]);
+})(Package['geojson-utils'] = exports, {
   GeoJSON: GeoJSON
-};
+});
 
 })();

@@ -2,15 +2,8 @@
 //                                                                      //
 // This is a generated file. You can view the original                  //
 // source in your browser if your browser supports source maps.         //
-//                                                                      //
-// If you are using Chrome, open the Developer Tools and click the gear //
-// icon in its lower right corner. In the General Settings panel, turn  //
-// on 'Enable source maps'.                                             //
-//                                                                      //
-// If you are using Firefox 23, go to `about:config` and set the        //
-// `devtools.debugger.source-maps-enabled` preference to true.          //
-// (The preference should be on by default in Firefox 24; versions      //
-// older than 23 do not support source maps.)                           //
+// Source maps are supported by all recent versions of Chrome, Safari,  //
+// and Firefox, and by Internet Explorer 11.                            //
 //                                                                      //
 //////////////////////////////////////////////////////////////////////////
 
@@ -19,14 +12,15 @@
 
 /* Imports */
 var Meteor = Package.meteor.Meteor;
-var JSON = Package.json.JSON;
+var global = Package.meteor.global;
+var meteorEnv = Package.meteor.meteorEnv;
 var _ = Package.underscore._;
 var Base64 = Package.base64.Base64;
 
 /* Package-scope variables */
 var EJSON, EJSONTest;
 
-(function () {
+(function(){
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //                                                                                                                   //
@@ -224,326 +218,333 @@ EJSON._isCustomType = function (obj) {                                          
     _.has(customTypes, obj.typeName());                                                                              // 188
 };                                                                                                                   // 189
                                                                                                                      // 190
-                                                                                                                     // 191
-// for both arrays and objects, in-place modification.                                                               // 192
-var adjustTypesToJSONValue =                                                                                         // 193
-EJSON._adjustTypesToJSONValue = function (obj) {                                                                     // 194
-  // Is it an atom that we need to adjust?                                                                           // 195
-  if (obj === null)                                                                                                  // 196
-    return null;                                                                                                     // 197
-  var maybeChanged = toJSONValueHelper(obj);                                                                         // 198
-  if (maybeChanged !== undefined)                                                                                    // 199
-    return maybeChanged;                                                                                             // 200
-                                                                                                                     // 201
-  // Other atoms are unchanged.                                                                                      // 202
-  if (typeof obj !== 'object')                                                                                       // 203
-    return obj;                                                                                                      // 204
-                                                                                                                     // 205
-  // Iterate over array or object structure.                                                                         // 206
-  _.each(obj, function (value, key) {                                                                                // 207
-    if (typeof value !== 'object' && value !== undefined &&                                                          // 208
-        !isInfOrNan(value))                                                                                          // 209
-      return; // continue                                                                                            // 210
-                                                                                                                     // 211
-    var changed = toJSONValueHelper(value);                                                                          // 212
-    if (changed) {                                                                                                   // 213
-      obj[key] = changed;                                                                                            // 214
-      return; // on to the next key                                                                                  // 215
-    }                                                                                                                // 216
-    // if we get here, value is an object but not adjustable                                                         // 217
-    // at this level.  recurse.                                                                                      // 218
-    adjustTypesToJSONValue(value);                                                                                   // 219
-  });                                                                                                                // 220
-  return obj;                                                                                                        // 221
-};                                                                                                                   // 222
-                                                                                                                     // 223
-// Either return the JSON-compatible version of the argument, or undefined (if                                       // 224
-// the item isn't itself replaceable, but maybe some fields in it are)                                               // 225
-var toJSONValueHelper = function (item) {                                                                            // 226
-  for (var i = 0; i < builtinConverters.length; i++) {                                                               // 227
-    var converter = builtinConverters[i];                                                                            // 228
-    if (converter.matchObject(item)) {                                                                               // 229
-      return converter.toJSONValue(item);                                                                            // 230
-    }                                                                                                                // 231
-  }                                                                                                                  // 232
-  return undefined;                                                                                                  // 233
-};                                                                                                                   // 234
-                                                                                                                     // 235
-/**                                                                                                                  // 236
- * @summary Serialize an EJSON-compatible value into its plain JSON representation.                                  // 237
- * @locus Anywhere                                                                                                   // 238
- * @param {EJSON} val A value to serialize to plain JSON.                                                            // 239
- */                                                                                                                  // 240
-EJSON.toJSONValue = function (item) {                                                                                // 241
-  var changed = toJSONValueHelper(item);                                                                             // 242
-  if (changed !== undefined)                                                                                         // 243
-    return changed;                                                                                                  // 244
-  if (typeof item === 'object') {                                                                                    // 245
-    item = EJSON.clone(item);                                                                                        // 246
-    adjustTypesToJSONValue(item);                                                                                    // 247
-  }                                                                                                                  // 248
-  return item;                                                                                                       // 249
-};                                                                                                                   // 250
-                                                                                                                     // 251
-// for both arrays and objects. Tries its best to just                                                               // 252
-// use the object you hand it, but may return something                                                              // 253
-// different if the object you hand it itself needs changing.                                                        // 254
-//                                                                                                                   // 255
-var adjustTypesFromJSONValue =                                                                                       // 256
-EJSON._adjustTypesFromJSONValue = function (obj) {                                                                   // 257
-  if (obj === null)                                                                                                  // 258
-    return null;                                                                                                     // 259
-  var maybeChanged = fromJSONValueHelper(obj);                                                                       // 260
-  if (maybeChanged !== obj)                                                                                          // 261
-    return maybeChanged;                                                                                             // 262
-                                                                                                                     // 263
-  // Other atoms are unchanged.                                                                                      // 264
-  if (typeof obj !== 'object')                                                                                       // 265
-    return obj;                                                                                                      // 266
-                                                                                                                     // 267
-  _.each(obj, function (value, key) {                                                                                // 268
-    if (typeof value === 'object') {                                                                                 // 269
-      var changed = fromJSONValueHelper(value);                                                                      // 270
-      if (value !== changed) {                                                                                       // 271
-        obj[key] = changed;                                                                                          // 272
-        return;                                                                                                      // 273
-      }                                                                                                              // 274
-      // if we get here, value is an object but not adjustable                                                       // 275
-      // at this level.  recurse.                                                                                    // 276
-      adjustTypesFromJSONValue(value);                                                                               // 277
-    }                                                                                                                // 278
-  });                                                                                                                // 279
-  return obj;                                                                                                        // 280
-};                                                                                                                   // 281
-                                                                                                                     // 282
-// Either return the argument changed to have the non-json                                                           // 283
-// rep of itself (the Object version) or the argument itself.                                                        // 284
-                                                                                                                     // 285
-// DOES NOT RECURSE.  For actually getting the fully-changed value, use                                              // 286
-// EJSON.fromJSONValue                                                                                               // 287
-var fromJSONValueHelper = function (value) {                                                                         // 288
-  if (typeof value === 'object' && value !== null) {                                                                 // 289
-    if (_.size(value) <= 2                                                                                           // 290
-        && _.all(value, function (v, k) {                                                                            // 291
-          return typeof k === 'string' && k.substr(0, 1) === '$';                                                    // 292
-        })) {                                                                                                        // 293
-      for (var i = 0; i < builtinConverters.length; i++) {                                                           // 294
-        var converter = builtinConverters[i];                                                                        // 295
-        if (converter.matchJSONValue(value)) {                                                                       // 296
-          return converter.fromJSONValue(value);                                                                     // 297
-        }                                                                                                            // 298
-      }                                                                                                              // 299
-    }                                                                                                                // 300
-  }                                                                                                                  // 301
-  return value;                                                                                                      // 302
-};                                                                                                                   // 303
-                                                                                                                     // 304
-/**                                                                                                                  // 305
- * @summary Deserialize an EJSON value from its plain JSON representation.                                           // 306
- * @locus Anywhere                                                                                                   // 307
- * @param {JSONCompatible} val A value to deserialize into EJSON.                                                    // 308
- */                                                                                                                  // 309
-EJSON.fromJSONValue = function (item) {                                                                              // 310
-  var changed = fromJSONValueHelper(item);                                                                           // 311
-  if (changed === item && typeof item === 'object') {                                                                // 312
-    item = EJSON.clone(item);                                                                                        // 313
-    adjustTypesFromJSONValue(item);                                                                                  // 314
-    return item;                                                                                                     // 315
-  } else {                                                                                                           // 316
-    return changed;                                                                                                  // 317
-  }                                                                                                                  // 318
-};                                                                                                                   // 319
-                                                                                                                     // 320
-/**                                                                                                                  // 321
- * @summary Serialize a value to a string.                                                                           // 322
-                                                                                                                     // 323
+EJSON._getTypes = function () {                                                                                      // 191
+  return customTypes;                                                                                                // 192
+};                                                                                                                   // 193
+                                                                                                                     // 194
+EJSON._getConverters = function () {                                                                                 // 195
+  return builtinConverters;                                                                                          // 196
+};                                                                                                                   // 197
+                                                                                                                     // 198
+// for both arrays and objects, in-place modification.                                                               // 199
+var adjustTypesToJSONValue =                                                                                         // 200
+EJSON._adjustTypesToJSONValue = function (obj) {                                                                     // 201
+  // Is it an atom that we need to adjust?                                                                           // 202
+  if (obj === null)                                                                                                  // 203
+    return null;                                                                                                     // 204
+  var maybeChanged = toJSONValueHelper(obj);                                                                         // 205
+  if (maybeChanged !== undefined)                                                                                    // 206
+    return maybeChanged;                                                                                             // 207
+                                                                                                                     // 208
+  // Other atoms are unchanged.                                                                                      // 209
+  if (typeof obj !== 'object')                                                                                       // 210
+    return obj;                                                                                                      // 211
+                                                                                                                     // 212
+  // Iterate over array or object structure.                                                                         // 213
+  _.each(obj, function (value, key) {                                                                                // 214
+    if (typeof value !== 'object' && value !== undefined &&                                                          // 215
+        !isInfOrNan(value))                                                                                          // 216
+      return; // continue                                                                                            // 217
+                                                                                                                     // 218
+    var changed = toJSONValueHelper(value);                                                                          // 219
+    if (changed) {                                                                                                   // 220
+      obj[key] = changed;                                                                                            // 221
+      return; // on to the next key                                                                                  // 222
+    }                                                                                                                // 223
+    // if we get here, value is an object but not adjustable                                                         // 224
+    // at this level.  recurse.                                                                                      // 225
+    adjustTypesToJSONValue(value);                                                                                   // 226
+  });                                                                                                                // 227
+  return obj;                                                                                                        // 228
+};                                                                                                                   // 229
+                                                                                                                     // 230
+// Either return the JSON-compatible version of the argument, or undefined (if                                       // 231
+// the item isn't itself replaceable, but maybe some fields in it are)                                               // 232
+var toJSONValueHelper = function (item) {                                                                            // 233
+  for (var i = 0; i < builtinConverters.length; i++) {                                                               // 234
+    var converter = builtinConverters[i];                                                                            // 235
+    if (converter.matchObject(item)) {                                                                               // 236
+      return converter.toJSONValue(item);                                                                            // 237
+    }                                                                                                                // 238
+  }                                                                                                                  // 239
+  return undefined;                                                                                                  // 240
+};                                                                                                                   // 241
+                                                                                                                     // 242
+/**                                                                                                                  // 243
+ * @summary Serialize an EJSON-compatible value into its plain JSON representation.                                  // 244
+ * @locus Anywhere                                                                                                   // 245
+ * @param {EJSON} val A value to serialize to plain JSON.                                                            // 246
+ */                                                                                                                  // 247
+EJSON.toJSONValue = function (item) {                                                                                // 248
+  var changed = toJSONValueHelper(item);                                                                             // 249
+  if (changed !== undefined)                                                                                         // 250
+    return changed;                                                                                                  // 251
+  if (typeof item === 'object') {                                                                                    // 252
+    item = EJSON.clone(item);                                                                                        // 253
+    adjustTypesToJSONValue(item);                                                                                    // 254
+  }                                                                                                                  // 255
+  return item;                                                                                                       // 256
+};                                                                                                                   // 257
+                                                                                                                     // 258
+// for both arrays and objects. Tries its best to just                                                               // 259
+// use the object you hand it, but may return something                                                              // 260
+// different if the object you hand it itself needs changing.                                                        // 261
+//                                                                                                                   // 262
+var adjustTypesFromJSONValue =                                                                                       // 263
+EJSON._adjustTypesFromJSONValue = function (obj) {                                                                   // 264
+  if (obj === null)                                                                                                  // 265
+    return null;                                                                                                     // 266
+  var maybeChanged = fromJSONValueHelper(obj);                                                                       // 267
+  if (maybeChanged !== obj)                                                                                          // 268
+    return maybeChanged;                                                                                             // 269
+                                                                                                                     // 270
+  // Other atoms are unchanged.                                                                                      // 271
+  if (typeof obj !== 'object')                                                                                       // 272
+    return obj;                                                                                                      // 273
+                                                                                                                     // 274
+  _.each(obj, function (value, key) {                                                                                // 275
+    if (typeof value === 'object') {                                                                                 // 276
+      var changed = fromJSONValueHelper(value);                                                                      // 277
+      if (value !== changed) {                                                                                       // 278
+        obj[key] = changed;                                                                                          // 279
+        return;                                                                                                      // 280
+      }                                                                                                              // 281
+      // if we get here, value is an object but not adjustable                                                       // 282
+      // at this level.  recurse.                                                                                    // 283
+      adjustTypesFromJSONValue(value);                                                                               // 284
+    }                                                                                                                // 285
+  });                                                                                                                // 286
+  return obj;                                                                                                        // 287
+};                                                                                                                   // 288
+                                                                                                                     // 289
+// Either return the argument changed to have the non-json                                                           // 290
+// rep of itself (the Object version) or the argument itself.                                                        // 291
+                                                                                                                     // 292
+// DOES NOT RECURSE.  For actually getting the fully-changed value, use                                              // 293
+// EJSON.fromJSONValue                                                                                               // 294
+var fromJSONValueHelper = function (value) {                                                                         // 295
+  if (typeof value === 'object' && value !== null) {                                                                 // 296
+    if (_.size(value) <= 2                                                                                           // 297
+        && _.all(value, function (v, k) {                                                                            // 298
+          return typeof k === 'string' && k.substr(0, 1) === '$';                                                    // 299
+        })) {                                                                                                        // 300
+      for (var i = 0; i < builtinConverters.length; i++) {                                                           // 301
+        var converter = builtinConverters[i];                                                                        // 302
+        if (converter.matchJSONValue(value)) {                                                                       // 303
+          return converter.fromJSONValue(value);                                                                     // 304
+        }                                                                                                            // 305
+      }                                                                                                              // 306
+    }                                                                                                                // 307
+  }                                                                                                                  // 308
+  return value;                                                                                                      // 309
+};                                                                                                                   // 310
+                                                                                                                     // 311
+/**                                                                                                                  // 312
+ * @summary Deserialize an EJSON value from its plain JSON representation.                                           // 313
+ * @locus Anywhere                                                                                                   // 314
+ * @param {JSONCompatible} val A value to deserialize into EJSON.                                                    // 315
+ */                                                                                                                  // 316
+EJSON.fromJSONValue = function (item) {                                                                              // 317
+  var changed = fromJSONValueHelper(item);                                                                           // 318
+  if (changed === item && typeof item === 'object') {                                                                // 319
+    item = EJSON.clone(item);                                                                                        // 320
+    adjustTypesFromJSONValue(item);                                                                                  // 321
+    return item;                                                                                                     // 322
+  } else {                                                                                                           // 323
+    return changed;                                                                                                  // 324
+  }                                                                                                                  // 325
+};                                                                                                                   // 326
+                                                                                                                     // 327
+/**                                                                                                                  // 328
+ * @summary Serialize a value to a string.                                                                           // 329
+                                                                                                                     // 330
 For EJSON values, the serialization fully represents the value. For non-EJSON values, serializes the same way as `JSON.stringify`.
- * @locus Anywhere                                                                                                   // 325
- * @param {EJSON} val A value to stringify.                                                                          // 326
- * @param {Object} [options]                                                                                         // 327
+ * @locus Anywhere                                                                                                   // 332
+ * @param {EJSON} val A value to stringify.                                                                          // 333
+ * @param {Object} [options]                                                                                         // 334
  * @param {Boolean | Integer | String} options.indent Indents objects and arrays for easy readability.  When `true`, indents by 2 spaces; when an integer, indents by that number of spaces; and when a string, uses the string as the indentation pattern.
- * @param {Boolean} options.canonical When `true`, stringifies keys in an object in sorted order.                    // 329
- */                                                                                                                  // 330
-EJSON.stringify = function (item, options) {                                                                         // 331
-  var json = EJSON.toJSONValue(item);                                                                                // 332
-  if (options && (options.canonical || options.indent)) {                                                            // 333
-    return EJSON._canonicalStringify(json, options);                                                                 // 334
-  } else {                                                                                                           // 335
-    return JSON.stringify(json);                                                                                     // 336
-  }                                                                                                                  // 337
-};                                                                                                                   // 338
-                                                                                                                     // 339
-/**                                                                                                                  // 340
- * @summary Parse a string into an EJSON value. Throws an error if the string is not valid EJSON.                    // 341
- * @locus Anywhere                                                                                                   // 342
- * @param {String} str A string to parse into an EJSON value.                                                        // 343
- */                                                                                                                  // 344
-EJSON.parse = function (item) {                                                                                      // 345
-  if (typeof item !== 'string')                                                                                      // 346
-    throw new Error("EJSON.parse argument should be a string");                                                      // 347
-  return EJSON.fromJSONValue(JSON.parse(item));                                                                      // 348
-};                                                                                                                   // 349
-                                                                                                                     // 350
-/**                                                                                                                  // 351
- * @summary Returns true if `x` is a buffer of binary data, as returned from [`EJSON.newBinary`](#ejson_new_binary). // 352
- * @param {Object} x The variable to check.                                                                          // 353
- * @locus Anywhere                                                                                                   // 354
- */                                                                                                                  // 355
-EJSON.isBinary = function (obj) {                                                                                    // 356
-  return !!((typeof Uint8Array !== 'undefined' && obj instanceof Uint8Array) ||                                      // 357
-    (obj && obj.$Uint8ArrayPolyfill));                                                                               // 358
-};                                                                                                                   // 359
-                                                                                                                     // 360
-/**                                                                                                                  // 361
+ * @param {Boolean} options.canonical When `true`, stringifies keys in an object in sorted order.                    // 336
+ */                                                                                                                  // 337
+EJSON.stringify = function (item, options) {                                                                         // 338
+  var json = EJSON.toJSONValue(item);                                                                                // 339
+  if (options && (options.canonical || options.indent)) {                                                            // 340
+    return EJSON._canonicalStringify(json, options);                                                                 // 341
+  } else {                                                                                                           // 342
+    return JSON.stringify(json);                                                                                     // 343
+  }                                                                                                                  // 344
+};                                                                                                                   // 345
+                                                                                                                     // 346
+/**                                                                                                                  // 347
+ * @summary Parse a string into an EJSON value. Throws an error if the string is not valid EJSON.                    // 348
+ * @locus Anywhere                                                                                                   // 349
+ * @param {String} str A string to parse into an EJSON value.                                                        // 350
+ */                                                                                                                  // 351
+EJSON.parse = function (item) {                                                                                      // 352
+  if (typeof item !== 'string')                                                                                      // 353
+    throw new Error("EJSON.parse argument should be a string");                                                      // 354
+  return EJSON.fromJSONValue(JSON.parse(item));                                                                      // 355
+};                                                                                                                   // 356
+                                                                                                                     // 357
+/**                                                                                                                  // 358
+ * @summary Returns true if `x` is a buffer of binary data, as returned from [`EJSON.newBinary`](#ejson_new_binary).
+ * @param {Object} x The variable to check.                                                                          // 360
+ * @locus Anywhere                                                                                                   // 361
+ */                                                                                                                  // 362
+EJSON.isBinary = function (obj) {                                                                                    // 363
+  return !!((typeof Uint8Array !== 'undefined' && obj instanceof Uint8Array) ||                                      // 364
+    (obj && obj.$Uint8ArrayPolyfill));                                                                               // 365
+};                                                                                                                   // 366
+                                                                                                                     // 367
+/**                                                                                                                  // 368
  * @summary Return true if `a` and `b` are equal to each other.  Return false otherwise.  Uses the `equals` method on `a` if present, otherwise performs a deep comparison.
- * @locus Anywhere                                                                                                   // 363
- * @param {EJSON} a                                                                                                  // 364
- * @param {EJSON} b                                                                                                  // 365
- * @param {Object} [options]                                                                                         // 366
+ * @locus Anywhere                                                                                                   // 370
+ * @param {EJSON} a                                                                                                  // 371
+ * @param {EJSON} b                                                                                                  // 372
+ * @param {Object} [options]                                                                                         // 373
  * @param {Boolean} options.keyOrderSensitive Compare in key sensitive order, if supported by the JavaScript implementation.  For example, `{a: 1, b: 2}` is equal to `{b: 2, a: 1}` only when `keyOrderSensitive` is `false`.  The default is `false`.
- */                                                                                                                  // 368
-EJSON.equals = function (a, b, options) {                                                                            // 369
-  var i;                                                                                                             // 370
-  var keyOrderSensitive = !!(options && options.keyOrderSensitive);                                                  // 371
-  if (a === b)                                                                                                       // 372
-    return true;                                                                                                     // 373
-  if (_.isNaN(a) && _.isNaN(b))                                                                                      // 374
-    return true; // This differs from the IEEE spec for NaN equality, b/c we don't want                              // 375
-                 // anything ever with a NaN to be poisoned from becoming equal to anything.                         // 376
-  if (!a || !b) // if either one is falsy, they'd have to be === to be equal                                         // 377
-    return false;                                                                                                    // 378
-  if (!(typeof a === 'object' && typeof b === 'object'))                                                             // 379
-    return false;                                                                                                    // 380
-  if (a instanceof Date && b instanceof Date)                                                                        // 381
-    return a.valueOf() === b.valueOf();                                                                              // 382
-  if (EJSON.isBinary(a) && EJSON.isBinary(b)) {                                                                      // 383
-    if (a.length !== b.length)                                                                                       // 384
-      return false;                                                                                                  // 385
-    for (i = 0; i < a.length; i++) {                                                                                 // 386
-      if (a[i] !== b[i])                                                                                             // 387
-        return false;                                                                                                // 388
-    }                                                                                                                // 389
-    return true;                                                                                                     // 390
-  }                                                                                                                  // 391
-  if (typeof (a.equals) === 'function')                                                                              // 392
-    return a.equals(b, options);                                                                                     // 393
-  if (typeof (b.equals) === 'function')                                                                              // 394
-    return b.equals(a, options);                                                                                     // 395
-  if (a instanceof Array) {                                                                                          // 396
-    if (!(b instanceof Array))                                                                                       // 397
-      return false;                                                                                                  // 398
-    if (a.length !== b.length)                                                                                       // 399
-      return false;                                                                                                  // 400
-    for (i = 0; i < a.length; i++) {                                                                                 // 401
-      if (!EJSON.equals(a[i], b[i], options))                                                                        // 402
-        return false;                                                                                                // 403
-    }                                                                                                                // 404
-    return true;                                                                                                     // 405
-  }                                                                                                                  // 406
-  // fallback for custom types that don't implement their own equals                                                 // 407
-  switch (EJSON._isCustomType(a) + EJSON._isCustomType(b)) {                                                         // 408
-    case 1: return false;                                                                                            // 409
-    case 2: return EJSON.equals(EJSON.toJSONValue(a), EJSON.toJSONValue(b));                                         // 410
-  }                                                                                                                  // 411
-  // fall back to structural equality of objects                                                                     // 412
-  var ret;                                                                                                           // 413
-  if (keyOrderSensitive) {                                                                                           // 414
-    var bKeys = [];                                                                                                  // 415
-    _.each(b, function (val, x) {                                                                                    // 416
-        bKeys.push(x);                                                                                               // 417
-    });                                                                                                              // 418
-    i = 0;                                                                                                           // 419
-    ret = _.all(a, function (val, x) {                                                                               // 420
-      if (i >= bKeys.length) {                                                                                       // 421
-        return false;                                                                                                // 422
-      }                                                                                                              // 423
-      if (x !== bKeys[i]) {                                                                                          // 424
-        return false;                                                                                                // 425
-      }                                                                                                              // 426
-      if (!EJSON.equals(val, b[bKeys[i]], options)) {                                                                // 427
-        return false;                                                                                                // 428
-      }                                                                                                              // 429
-      i++;                                                                                                           // 430
-      return true;                                                                                                   // 431
-    });                                                                                                              // 432
-    return ret && i === bKeys.length;                                                                                // 433
-  } else {                                                                                                           // 434
-    i = 0;                                                                                                           // 435
-    ret = _.all(a, function (val, key) {                                                                             // 436
-      if (!_.has(b, key)) {                                                                                          // 437
-        return false;                                                                                                // 438
-      }                                                                                                              // 439
-      if (!EJSON.equals(val, b[key], options)) {                                                                     // 440
-        return false;                                                                                                // 441
-      }                                                                                                              // 442
-      i++;                                                                                                           // 443
-      return true;                                                                                                   // 444
-    });                                                                                                              // 445
-    return ret && _.size(b) === i;                                                                                   // 446
-  }                                                                                                                  // 447
-};                                                                                                                   // 448
-                                                                                                                     // 449
-/**                                                                                                                  // 450
- * @summary Return a deep copy of `val`.                                                                             // 451
- * @locus Anywhere                                                                                                   // 452
- * @param {EJSON} val A value to copy.                                                                               // 453
- */                                                                                                                  // 454
-EJSON.clone = function (v) {                                                                                         // 455
-  var ret;                                                                                                           // 456
-  if (typeof v !== "object")                                                                                         // 457
-    return v;                                                                                                        // 458
-  if (v === null)                                                                                                    // 459
-    return null; // null has typeof "object"                                                                         // 460
-  if (v instanceof Date)                                                                                             // 461
-    return new Date(v.getTime());                                                                                    // 462
-  // RegExps are not really EJSON elements (eg we don't define a serialization                                       // 463
-  // for them), but they're immutable anyway, so we can support them in clone.                                       // 464
-  if (v instanceof RegExp)                                                                                           // 465
-    return v;                                                                                                        // 466
-  if (EJSON.isBinary(v)) {                                                                                           // 467
-    ret = EJSON.newBinary(v.length);                                                                                 // 468
-    for (var i = 0; i < v.length; i++) {                                                                             // 469
-      ret[i] = v[i];                                                                                                 // 470
-    }                                                                                                                // 471
-    return ret;                                                                                                      // 472
-  }                                                                                                                  // 473
-  // XXX: Use something better than underscore's isArray                                                             // 474
-  if (_.isArray(v) || _.isArguments(v)) {                                                                            // 475
-    // For some reason, _.map doesn't work in this context on Opera (weird test                                      // 476
-    // failures).                                                                                                    // 477
-    ret = [];                                                                                                        // 478
-    for (i = 0; i < v.length; i++)                                                                                   // 479
-      ret[i] = EJSON.clone(v[i]);                                                                                    // 480
-    return ret;                                                                                                      // 481
-  }                                                                                                                  // 482
-  // handle general user-defined typed Objects if they have a clone method                                           // 483
-  if (typeof v.clone === 'function') {                                                                               // 484
-    return v.clone();                                                                                                // 485
-  }                                                                                                                  // 486
-  // handle other custom types                                                                                       // 487
-  if (EJSON._isCustomType(v)) {                                                                                      // 488
-    return EJSON.fromJSONValue(EJSON.clone(EJSON.toJSONValue(v)), true);                                             // 489
-  }                                                                                                                  // 490
-  // handle other objects                                                                                            // 491
-  ret = {};                                                                                                          // 492
-  _.each(v, function (value, key) {                                                                                  // 493
-    ret[key] = EJSON.clone(value);                                                                                   // 494
-  });                                                                                                                // 495
-  return ret;                                                                                                        // 496
-};                                                                                                                   // 497
-                                                                                                                     // 498
-/**                                                                                                                  // 499
- * @summary Allocate a new buffer of binary data that EJSON can serialize.                                           // 500
- * @locus Anywhere                                                                                                   // 501
- * @param {Number} size The number of bytes of binary data to allocate.                                              // 502
- */                                                                                                                  // 503
-// EJSON.newBinary is the public documented API for this functionality,                                              // 504
-// but the implementation is in the 'base64' package to avoid                                                        // 505
-// introducing a circular dependency. (If the implementation were here,                                              // 506
-// then 'base64' would have to use EJSON.newBinary, and 'ejson' would                                                // 507
-// also have to use 'base64'.)                                                                                       // 508
-EJSON.newBinary = Base64.newBinary;                                                                                  // 509
-                                                                                                                     // 510
+ */                                                                                                                  // 375
+EJSON.equals = function (a, b, options) {                                                                            // 376
+  var i;                                                                                                             // 377
+  var keyOrderSensitive = !!(options && options.keyOrderSensitive);                                                  // 378
+  if (a === b)                                                                                                       // 379
+    return true;                                                                                                     // 380
+  if (_.isNaN(a) && _.isNaN(b))                                                                                      // 381
+    return true; // This differs from the IEEE spec for NaN equality, b/c we don't want                              // 382
+                 // anything ever with a NaN to be poisoned from becoming equal to anything.                         // 383
+  if (!a || !b) // if either one is falsy, they'd have to be === to be equal                                         // 384
+    return false;                                                                                                    // 385
+  if (!(typeof a === 'object' && typeof b === 'object'))                                                             // 386
+    return false;                                                                                                    // 387
+  if (a instanceof Date && b instanceof Date)                                                                        // 388
+    return a.valueOf() === b.valueOf();                                                                              // 389
+  if (EJSON.isBinary(a) && EJSON.isBinary(b)) {                                                                      // 390
+    if (a.length !== b.length)                                                                                       // 391
+      return false;                                                                                                  // 392
+    for (i = 0; i < a.length; i++) {                                                                                 // 393
+      if (a[i] !== b[i])                                                                                             // 394
+        return false;                                                                                                // 395
+    }                                                                                                                // 396
+    return true;                                                                                                     // 397
+  }                                                                                                                  // 398
+  if (typeof (a.equals) === 'function')                                                                              // 399
+    return a.equals(b, options);                                                                                     // 400
+  if (typeof (b.equals) === 'function')                                                                              // 401
+    return b.equals(a, options);                                                                                     // 402
+  if (a instanceof Array) {                                                                                          // 403
+    if (!(b instanceof Array))                                                                                       // 404
+      return false;                                                                                                  // 405
+    if (a.length !== b.length)                                                                                       // 406
+      return false;                                                                                                  // 407
+    for (i = 0; i < a.length; i++) {                                                                                 // 408
+      if (!EJSON.equals(a[i], b[i], options))                                                                        // 409
+        return false;                                                                                                // 410
+    }                                                                                                                // 411
+    return true;                                                                                                     // 412
+  }                                                                                                                  // 413
+  // fallback for custom types that don't implement their own equals                                                 // 414
+  switch (EJSON._isCustomType(a) + EJSON._isCustomType(b)) {                                                         // 415
+    case 1: return false;                                                                                            // 416
+    case 2: return EJSON.equals(EJSON.toJSONValue(a), EJSON.toJSONValue(b));                                         // 417
+  }                                                                                                                  // 418
+  // fall back to structural equality of objects                                                                     // 419
+  var ret;                                                                                                           // 420
+  if (keyOrderSensitive) {                                                                                           // 421
+    var bKeys = [];                                                                                                  // 422
+    _.each(b, function (val, x) {                                                                                    // 423
+        bKeys.push(x);                                                                                               // 424
+    });                                                                                                              // 425
+    i = 0;                                                                                                           // 426
+    ret = _.all(a, function (val, x) {                                                                               // 427
+      if (i >= bKeys.length) {                                                                                       // 428
+        return false;                                                                                                // 429
+      }                                                                                                              // 430
+      if (x !== bKeys[i]) {                                                                                          // 431
+        return false;                                                                                                // 432
+      }                                                                                                              // 433
+      if (!EJSON.equals(val, b[bKeys[i]], options)) {                                                                // 434
+        return false;                                                                                                // 435
+      }                                                                                                              // 436
+      i++;                                                                                                           // 437
+      return true;                                                                                                   // 438
+    });                                                                                                              // 439
+    return ret && i === bKeys.length;                                                                                // 440
+  } else {                                                                                                           // 441
+    i = 0;                                                                                                           // 442
+    ret = _.all(a, function (val, key) {                                                                             // 443
+      if (!_.has(b, key)) {                                                                                          // 444
+        return false;                                                                                                // 445
+      }                                                                                                              // 446
+      if (!EJSON.equals(val, b[key], options)) {                                                                     // 447
+        return false;                                                                                                // 448
+      }                                                                                                              // 449
+      i++;                                                                                                           // 450
+      return true;                                                                                                   // 451
+    });                                                                                                              // 452
+    return ret && _.size(b) === i;                                                                                   // 453
+  }                                                                                                                  // 454
+};                                                                                                                   // 455
+                                                                                                                     // 456
+/**                                                                                                                  // 457
+ * @summary Return a deep copy of `val`.                                                                             // 458
+ * @locus Anywhere                                                                                                   // 459
+ * @param {EJSON} val A value to copy.                                                                               // 460
+ */                                                                                                                  // 461
+EJSON.clone = function (v) {                                                                                         // 462
+  var ret;                                                                                                           // 463
+  if (typeof v !== "object")                                                                                         // 464
+    return v;                                                                                                        // 465
+  if (v === null)                                                                                                    // 466
+    return null; // null has typeof "object"                                                                         // 467
+  if (v instanceof Date)                                                                                             // 468
+    return new Date(v.getTime());                                                                                    // 469
+  // RegExps are not really EJSON elements (eg we don't define a serialization                                       // 470
+  // for them), but they're immutable anyway, so we can support them in clone.                                       // 471
+  if (v instanceof RegExp)                                                                                           // 472
+    return v;                                                                                                        // 473
+  if (EJSON.isBinary(v)) {                                                                                           // 474
+    ret = EJSON.newBinary(v.length);                                                                                 // 475
+    for (var i = 0; i < v.length; i++) {                                                                             // 476
+      ret[i] = v[i];                                                                                                 // 477
+    }                                                                                                                // 478
+    return ret;                                                                                                      // 479
+  }                                                                                                                  // 480
+  // XXX: Use something better than underscore's isArray                                                             // 481
+  if (_.isArray(v) || _.isArguments(v)) {                                                                            // 482
+    // For some reason, _.map doesn't work in this context on Opera (weird test                                      // 483
+    // failures).                                                                                                    // 484
+    ret = [];                                                                                                        // 485
+    for (i = 0; i < v.length; i++)                                                                                   // 486
+      ret[i] = EJSON.clone(v[i]);                                                                                    // 487
+    return ret;                                                                                                      // 488
+  }                                                                                                                  // 489
+  // handle general user-defined typed Objects if they have a clone method                                           // 490
+  if (typeof v.clone === 'function') {                                                                               // 491
+    return v.clone();                                                                                                // 492
+  }                                                                                                                  // 493
+  // handle other custom types                                                                                       // 494
+  if (EJSON._isCustomType(v)) {                                                                                      // 495
+    return EJSON.fromJSONValue(EJSON.clone(EJSON.toJSONValue(v)), true);                                             // 496
+  }                                                                                                                  // 497
+  // handle other objects                                                                                            // 498
+  ret = {};                                                                                                          // 499
+  _.each(v, function (value, key) {                                                                                  // 500
+    ret[key] = EJSON.clone(value);                                                                                   // 501
+  });                                                                                                                // 502
+  return ret;                                                                                                        // 503
+};                                                                                                                   // 504
+                                                                                                                     // 505
+/**                                                                                                                  // 506
+ * @summary Allocate a new buffer of binary data that EJSON can serialize.                                           // 507
+ * @locus Anywhere                                                                                                   // 508
+ * @param {Number} size The number of bytes of binary data to allocate.                                              // 509
+ */                                                                                                                  // 510
+// EJSON.newBinary is the public documented API for this functionality,                                              // 511
+// but the implementation is in the 'base64' package to avoid                                                        // 512
+// introducing a circular dependency. (If the implementation were here,                                              // 513
+// then 'base64' would have to use EJSON.newBinary, and 'ejson' would                                                // 514
+// also have to use 'base64'.)                                                                                       // 515
+EJSON.newBinary = Base64.newBinary;                                                                                  // 516
+                                                                                                                     // 517
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 }).call(this);
@@ -553,7 +554,7 @@ EJSON.newBinary = Base64.newBinary;                                             
 
 
 
-(function () {
+(function(){
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //                                                                                                                   //
@@ -687,9 +688,12 @@ EJSON._canonicalStringify = function (value, options) {                         
 
 /* Exports */
 if (typeof Package === 'undefined') Package = {};
-Package.ejson = {
+(function (pkg, symbols) {
+  for (var s in symbols)
+    (s in pkg) || (pkg[s] = symbols[s]);
+})(Package.ejson = {}, {
   EJSON: EJSON,
   EJSONTest: EJSONTest
-};
+});
 
 })();

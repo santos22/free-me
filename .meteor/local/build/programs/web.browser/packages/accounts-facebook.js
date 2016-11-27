@@ -2,15 +2,8 @@
 //                                                                      //
 // This is a generated file. You can view the original                  //
 // source in your browser if your browser supports source maps.         //
-//                                                                      //
-// If you are using Chrome, open the Developer Tools and click the gear //
-// icon in its lower right corner. In the General Settings panel, turn  //
-// on 'Enable source maps'.                                             //
-//                                                                      //
-// If you are using Firefox 23, go to `about:config` and set the        //
-// `devtools.debugger.source-maps-enabled` preference to true.          //
-// (The preference should be on by default in Firefox 24; versions      //
-// older than 23 do not support source maps.)                           //
+// Source maps are supported by all recent versions of Chrome, Safari,  //
+// and Firefox, and by Internet Explorer 11.                            //
 //                                                                      //
 //////////////////////////////////////////////////////////////////////////
 
@@ -19,10 +12,12 @@
 
 /* Imports */
 var Meteor = Package.meteor.Meteor;
+var global = Package.meteor.global;
+var meteorEnv = Package.meteor.meteorEnv;
 var Accounts = Package['accounts-base'].Accounts;
 var Facebook = Package.facebook.Facebook;
 
-(function () {
+(function(){
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////
 //                                                                                                     //
@@ -40,7 +35,7 @@ if (Meteor.isClient) {                                                          
       options = null;                                                                                  // 8
     }                                                                                                  // 9
                                                                                                        // 10
-    var credentialRequestCompleteCallback = Accounts.oauth.credentialRequestCompleteHandler(callback); // 11
+    var credentialRequestCompleteCallback = Accounts.oauth.credentialRequestCompleteHandler(callback);
     Facebook.requestCredential(options, credentialRequestCompleteCallback);                            // 12
   };                                                                                                   // 13
 } else {                                                                                               // 14

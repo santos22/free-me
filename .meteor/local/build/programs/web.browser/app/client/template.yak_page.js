@@ -3,11 +3,11 @@ Template.__checkName("yakPage");
 Template["yakPage"] = new Template("Template.yakPage", (function() {
   var view = this;
   return HTML.DIV({
-    "class": "form-style"
+    class: "form-style"
   }, "\n    ", HTML.DIV({
-    "class": "container"
+    class: "container"
   }, "\n      ", Spacebars.include(view.lookupTemplate("yakItem")), "\n      ", HTML.DIV({
-    "class": "comment"
+    class: "comment"
   }, "\n        ", HTML.Raw("<h4>Comments</h4>"), "\n        ", HTML.Raw("<hr>"), "\n        ", Blaze.Each(function() {
     return Spacebars.call(view.lookup("comments"));
   }, function() {
@@ -15,4 +15,4 @@ Template["yakPage"] = new Template("Template.yakPage", (function() {
   }), "\n      "), " \n      ", Spacebars.include(view.lookupTemplate("commentSubmit")), "\n    "), "\n  ");
 }));
 
-})();
+}).call(this);

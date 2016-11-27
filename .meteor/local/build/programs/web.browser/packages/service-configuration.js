@@ -2,15 +2,8 @@
 //                                                                      //
 // This is a generated file. You can view the original                  //
 // source in your browser if your browser supports source maps.         //
-//                                                                      //
-// If you are using Chrome, open the Developer Tools and click the gear //
-// icon in its lower right corner. In the General Settings panel, turn  //
-// on 'Enable source maps'.                                             //
-//                                                                      //
-// If you are using Firefox 23, go to `about:config` and set the        //
-// `devtools.debugger.source-maps-enabled` preference to true.          //
-// (The preference should be on by default in Firefox 24; versions      //
-// older than 23 do not support source maps.)                           //
+// Source maps are supported by all recent versions of Chrome, Safari,  //
+// and Firefox, and by Internet Explorer 11.                            //
 //                                                                      //
 //////////////////////////////////////////////////////////////////////////
 
@@ -19,13 +12,15 @@
 
 /* Imports */
 var Meteor = Package.meteor.Meteor;
+var global = Package.meteor.global;
+var meteorEnv = Package.meteor.meteorEnv;
 var Accounts = Package['accounts-base'].Accounts;
 var Mongo = Package.mongo.Mongo;
 
 /* Package-scope variables */
 var ServiceConfiguration;
 
-(function () {
+(function(){
 
 ////////////////////////////////////////////////////////////////////////////////////////
 //                                                                                    //
@@ -63,7 +58,7 @@ ServiceConfiguration.ConfigError = function (serviceName) {                     
   }                                                                                   // 28
 };                                                                                    // 29
 ServiceConfiguration.ConfigError.prototype = new Error();                             // 30
-ServiceConfiguration.ConfigError.prototype.name = 'ServiceConfiguration.ConfigError'; // 31
+ServiceConfiguration.ConfigError.prototype.name = 'ServiceConfiguration.ConfigError';
                                                                                       // 32
 ////////////////////////////////////////////////////////////////////////////////////////
 
@@ -72,8 +67,11 @@ ServiceConfiguration.ConfigError.prototype.name = 'ServiceConfiguration.ConfigEr
 
 /* Exports */
 if (typeof Package === 'undefined') Package = {};
-Package['service-configuration'] = {
+(function (pkg, symbols) {
+  for (var s in symbols)
+    (s in pkg) || (pkg[s] = symbols[s]);
+})(Package['service-configuration'] = {}, {
   ServiceConfiguration: ServiceConfiguration
-};
+});
 
 })();

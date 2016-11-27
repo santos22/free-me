@@ -2,15 +2,8 @@
 //                                                                      //
 // This is a generated file. You can view the original                  //
 // source in your browser if your browser supports source maps.         //
-//                                                                      //
-// If you are using Chrome, open the Developer Tools and click the gear //
-// icon in its lower right corner. In the General Settings panel, turn  //
-// on 'Enable source maps'.                                             //
-//                                                                      //
-// If you are using Firefox 23, go to `about:config` and set the        //
-// `devtools.debugger.source-maps-enabled` preference to true.          //
-// (The preference should be on by default in Firefox 24; versions      //
-// older than 23 do not support source maps.)                           //
+// Source maps are supported by all recent versions of Chrome, Safari,  //
+// and Firefox, and by Internet Explorer 11.                            //
 //                                                                      //
 //////////////////////////////////////////////////////////////////////////
 
@@ -24,20 +17,23 @@ var Deps = Package.tracker.Deps;
 var Blaze = Package.blaze.Blaze;
 var UI = Package.blaze.UI;
 var Handlebars = Package.blaze.Handlebars;
-var Template = Package.templating.Template;
+var Template = Package['templating-runtime'].Template;
 var EJSON = Package.ejson.EJSON;
 var Meteor = Package.meteor.Meteor;
+var global = Package.meteor.global;
+var meteorEnv = Package.meteor.meteorEnv;
 var Iron = Package['iron:core'].Iron;
 var HTML = Package.htmljs.HTML;
+var Spacebars = Package.spacebars.Spacebars;
 
 /* Package-scope variables */
-var Router, RouteController, CurrentOptions, HTTP_METHODS, Route, route;
+var CurrentOptions, HTTP_METHODS, RouteController, Route, Router;
 
-(function () {
+(function(){
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //                                                                                                            //
-// packages/iron:router/lib/current_options.js                                                                //
+// packages/iron_router/lib/current_options.js                                                                //
 //                                                                                                            //
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
                                                                                                               //
@@ -56,11 +52,11 @@ CurrentOptions = new Meteor.EnvironmentVariable;                                
 
 
 
-(function () {
+(function(){
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //                                                                                                            //
-// packages/iron:router/lib/http_methods.js                                                                   //
+// packages/iron_router/lib/http_methods.js                                                                   //
 //                                                                                                            //
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
                                                                                                               //
@@ -81,11 +77,11 @@ HTTP_METHODS = [                                                                
 
 
 
-(function () {
+(function(){
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //                                                                                                            //
-// packages/iron:router/lib/route_controller.js                                                               //
+// packages/iron_router/lib/route_controller.js                                                               //
 //                                                                                                            //
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
                                                                                                               //
@@ -293,11 +289,11 @@ Iron.RouteController = RouteController;                                         
 
 
 
-(function () {
+(function(){
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //                                                                                                            //
-// packages/iron:router/lib/route_controller_client.js                                                        //
+// packages/iron_router/lib/route_controller_client.js                                                        //
 //                                                                                                            //
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
                                                                                                               //
@@ -688,11 +684,11 @@ if (Package.reload) {                                                           
 
 
 
-(function () {
+(function(){
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //                                                                                                            //
-// packages/iron:router/lib/route.js                                                                          //
+// packages/iron_router/lib/route.js                                                                          //
 //                                                                                                            //
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
                                                                                                               //
@@ -869,7 +865,7 @@ Route.prototype.url = function (params, options) {                              
   var path = this.path(params, options);                                                                      // 171
   var host = (options && options.host) || Meteor.absoluteUrl();                                               // 172
                                                                                                               // 173
-  if (host.charAt(host.length-1) === '/');                                                                    // 174
+  if (host.charAt(host.length-1) === '/')                                                                     // 174
     host = host.slice(0, host.length-1);                                                                      // 175
   return host + path;                                                                                         // 176
 };                                                                                                            // 177
@@ -922,11 +918,11 @@ Iron.Route = Route;                                                             
 
 
 
-(function () {
+(function(){
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //                                                                                                            //
-// packages/iron:router/lib/router.js                                                                         //
+// packages/iron_router/lib/router.js                                                                         //
 //                                                                                                            //
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
                                                                                                               //
@@ -1083,7 +1079,7 @@ Router.prototype.route = function (path, fn, opts) {                            
  */                                                                                                           // 151
 Router.prototype.findFirstRoute = function (url) {                                                            // 152
   var isMatch;                                                                                                // 153
-  var routeHandler;                                                                                           // 154
+  var route;                                                                                                  // 154
   for (var i = 0; i < this.routes.length; i++) {                                                              // 155
     route = this.routes[i];                                                                                   // 156
                                                                                                               // 157
@@ -1342,11 +1338,11 @@ Iron.Router = Router;                                                           
 
 
 
-(function () {
+(function(){
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //                                                                                                            //
-// packages/iron:router/lib/hooks.js                                                                          //
+// packages/iron_router/lib/hooks.js                                                                          //
 //                                                                                                            //
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
                                                                                                               //
@@ -1419,11 +1415,11 @@ Router.hooks.dataNotFound = function () {                                       
 
 
 
-(function () {
+(function(){
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //                                                                                                            //
-// packages/iron:router/lib/helpers.js                                                                        //
+// packages/iron_router/lib/helpers.js                                                                        //
 //                                                                                                            //
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
                                                                                                               //
@@ -1590,11 +1586,11 @@ UI.registerHelper('linkTo', new Blaze.Template('linkTo', function () {          
 
 
 
-(function () {
+(function(){
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //                                                                                                            //
-// packages/iron:router/lib/router_client.js                                                                  //
+// packages/iron_router/lib/router_client.js                                                                  //
 //                                                                                                            //
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
                                                                                                               //
@@ -1705,7 +1701,7 @@ Router.prototype.dispatch = function (url, context, done) {                     
         //   if the server CAN'T handle the router, we'll be back,                                            // 105
         //   but as the very first route handled on the client,                                               // 106
         //   and so initial will be true.                                                                     // 107
-        var state = Deps.nonreactive(function () { return controller.location.get().options.historyState; }); // 108
+        var state = Deps.nonreactive(function () { return controller.location.get().options.historyState; });
                                                                                                               // 109
         if (state && state.initial === true) {                                                                // 110
           // looks like there's no handlers so let's give a default                                           // 111
@@ -1850,11 +1846,11 @@ Router.prototype.go = function (routeNameOrPath, params, options) {             
 
 
 
-(function () {
+(function(){
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //                                                                                                            //
-// packages/iron:router/lib/plugins.js                                                                        //
+// packages/iron_router/lib/plugins.js                                                                        //
 //                                                                                                            //
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
                                                                                                               //
@@ -1881,11 +1877,11 @@ Router.plugins.dataNotFound = function (router, options) {                      
 
 
 
-(function () {
+(function(){
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //                                                                                                            //
-// packages/iron:router/lib/global_router.js                                                                  //
+// packages/iron_router/lib/global_router.js                                                                  //
 //                                                                                                            //
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
                                                                                                               //
@@ -1900,11 +1896,11 @@ Router = new Iron.Router;                                                       
 
 
 
-(function () {
+(function(){
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //                                                                                                            //
-// packages/iron:router/lib/template.templates.js                                                             //
+// packages/iron_router/lib/template.templates.js                                                             //
 //                                                                                                            //
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
                                                                                                               //
@@ -1934,9 +1930,12 @@ Template["__IronRouterNoRoutes__"] = new Template("Template.__IronRouterNoRoutes
 
 /* Exports */
 if (typeof Package === 'undefined') Package = {};
-Package['iron:router'] = {
+(function (pkg, symbols) {
+  for (var s in symbols)
+    (s in pkg) || (pkg[s] = symbols[s]);
+})(Package['iron:router'] = {}, {
   Router: Router,
   RouteController: RouteController
-};
+});
 
 })();

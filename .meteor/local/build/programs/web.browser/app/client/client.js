@@ -4,5 +4,4 @@ Template.yaksList.helpers({
   return Yaks.find({}, {sort : {score: -1}});
   }
 });
-
-})();
+}).call(this);

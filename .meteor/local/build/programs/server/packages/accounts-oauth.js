@@ -2,6 +2,8 @@
 
 /* Imports */
 var Meteor = Package.meteor.Meteor;
+var global = Package.meteor.global;
+var meteorEnv = Package.meteor.meteorEnv;
 var _ = Package.underscore._;
 var Random = Package.random.Random;
 var check = Package.check.check;
@@ -13,7 +15,7 @@ var Accounts = Package['accounts-base'].Accounts;
 var OAuth = Package.oauth.OAuth;
 var Oauth = Package.oauth.Oauth;
 
-(function () {
+(function(){
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //                                                                                                                 //
@@ -21,31 +23,42 @@ var Oauth = Package.oauth.Oauth;
 //                                                                                                                 //
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
                                                                                                                    //
-Accounts.oauth = {};                                                                                               // 1
-                                                                                                                   // 2
-var services = {};                                                                                                 // 3
-                                                                                                                   // 4
-// Helper for registering OAuth based accounts packages.                                                           // 5
-// On the server, adds an index to the user collection.                                                            // 6
-Accounts.oauth.registerService = function (name) {                                                                 // 7
-  if (_.has(services, name))                                                                                       // 8
-    throw new Error("Duplicate service: " + name);                                                                 // 9
-  services[name] = true;                                                                                           // 10
-                                                                                                                   // 11
-  if (Meteor.server) {                                                                                             // 12
-    // Accounts.updateOrCreateUserFromExternalService does a lookup by this id,                                    // 13
-    // so this should be a unique index. You might want to add indexes for other                                   // 14
-    // fields returned by your service (eg services.github.login) but you can do                                   // 15
-    // that in your app.                                                                                           // 16
-    Meteor.users._ensureIndex('services.' + name + '.id',                                                          // 17
-                              {unique: 1, sparse: 1});                                                             // 18
-  }                                                                                                                // 19
-};                                                                                                                 // 20
-                                                                                                                   // 21
-Accounts.oauth.serviceNames = function () {                                                                        // 22
-  return _.keys(services);                                                                                         // 23
-};                                                                                                                 // 24
-                                                                                                                   // 25
+Accounts.oauth = {};
+
+var services = {};
+
+// Helper for registering OAuth based accounts packages.
+// On the server, adds an index to the user collection.
+Accounts.oauth.registerService = function (name) {
+  if (_.has(services, name))
+    throw new Error("Duplicate service: " + name);
+  services[name] = true;
+
+  if (Meteor.server) {
+    // Accounts.updateOrCreateUserFromExternalService does a lookup by this id,
+    // so this should be a unique index. You might want to add indexes for other
+    // fields returned by your service (eg services.github.login) but you can do
+    // that in your app.
+    Meteor.users._ensureIndex('services.' + name + '.id',
+                              {unique: 1, sparse: 1});
+  }
+};
+
+// Removes a previously registered service.
+// This will disable logging in with this service, and serviceNames() will not
+// contain it.
+// It's worth noting that already logged in users will remain logged in unless
+// you manually expire their sessions.
+Accounts.oauth.unregisterService = function (name) {
+  if (!_.has(services, name))
+    throw new Error("Service not found: " + name);
+  delete services[name];
+};
+
+Accounts.oauth.serviceNames = function () {
+  return _.keys(services);
+};
+
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 }).call(this);
@@ -55,7 +68,7 @@ Accounts.oauth.serviceNames = function () {                                     
 
 
 
-(function () {
+(function(){
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //                                                                                                                 //
@@ -63,53 +76,64 @@ Accounts.oauth.serviceNames = function () {                                     
 //                                                                                                                 //
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
                                                                                                                    //
-// Listen to calls to `login` with an oauth option set. This is where                                              // 1
-// users actually get logged in to meteor via oauth.                                                               // 2
-Accounts.registerLoginHandler(function (options) {                                                                 // 3
-  if (!options.oauth)                                                                                              // 4
-    return undefined; // don't handle                                                                              // 5
-                                                                                                                   // 6
-  check(options.oauth, {                                                                                           // 7
-    credentialToken: String,                                                                                       // 8
-    // When an error occurs while retrieving the access token, we store                                            // 9
-    // the error in the pending credentials table, with a secret of                                                // 10
-    // null. The client can call the login method with a secret of null                                            // 11
-    // to retrieve the error.                                                                                      // 12
-    credentialSecret: Match.OneOf(null, String)                                                                    // 13
-  });                                                                                                              // 14
-                                                                                                                   // 15
-  var result = OAuth.retrieveCredential(options.oauth.credentialToken,                                             // 16
-                                        options.oauth.credentialSecret);                                           // 17
-                                                                                                                   // 18
-  if (!result) {                                                                                                   // 19
-    // OAuth credentialToken is not recognized, which could be either                                              // 20
-    // because the popup was closed by the user before completion, or                                              // 21
-    // some sort of error where the oauth provider didn't talk to our                                              // 22
-    // server correctly and closed the popup somehow.                                                              // 23
-    //                                                                                                             // 24
-    // We assume it was user canceled and report it as such, using a                                               // 25
-    // numeric code that the client recognizes (XXX this will get                                                  // 26
-    // replaced by a symbolic error code at some point                                                             // 27
-    // https://trello.com/c/kMkw800Z/53-official-ddp-specification). This                                          // 28
-    // will mask failures where things are misconfigured such that the                                             // 29
-    // server doesn't see the request but does close the window. This                                              // 30
-    // seems unlikely.                                                                                             // 31
-    //                                                                                                             // 32
-    // XXX we want `type` to be the service name such as "facebook"                                                // 33
-    return { type: "oauth",                                                                                        // 34
-             error: new Meteor.Error(                                                                              // 35
-               Accounts.LoginCancelledError.numericError,                                                          // 36
-               "No matching login attempt found") };                                                               // 37
-  }                                                                                                                // 38
-                                                                                                                   // 39
-  if (result instanceof Error)                                                                                     // 40
-    // We tried to login, but there was a fatal error. Report it back                                              // 41
-    // to the user.                                                                                                // 42
-    throw result;                                                                                                  // 43
-  else                                                                                                             // 44
-    return Accounts.updateOrCreateUserFromExternalService(result.serviceName, result.serviceData, result.options); // 45
-});                                                                                                                // 46
-                                                                                                                   // 47
+// Listen to calls to `login` with an oauth option set. This is where
+// users actually get logged in to meteor via oauth.
+Accounts.registerLoginHandler(function (options) {
+  if (!options.oauth)
+    return undefined; // don't handle
+
+  check(options.oauth, {
+    credentialToken: String,
+    // When an error occurs while retrieving the access token, we store
+    // the error in the pending credentials table, with a secret of
+    // null. The client can call the login method with a secret of null
+    // to retrieve the error.
+    credentialSecret: Match.OneOf(null, String)
+  });
+
+  var result = OAuth.retrieveCredential(options.oauth.credentialToken,
+                                        options.oauth.credentialSecret);
+
+  if (!result) {
+    // OAuth credentialToken is not recognized, which could be either
+    // because the popup was closed by the user before completion, or
+    // some sort of error where the oauth provider didn't talk to our
+    // server correctly and closed the popup somehow.
+    //
+    // We assume it was user canceled and report it as such, using a
+    // numeric code that the client recognizes (XXX this will get
+    // replaced by a symbolic error code at some point
+    // https://trello.com/c/kMkw800Z/53-official-ddp-specification). This
+    // will mask failures where things are misconfigured such that the
+    // server doesn't see the request but does close the window. This
+    // seems unlikely.
+    //
+    // XXX we want `type` to be the service name such as "facebook"
+    return { type: "oauth",
+             error: new Meteor.Error(
+               Accounts.LoginCancelledError.numericError,
+               "No matching login attempt found") };
+  }
+
+  if (result instanceof Error)
+    // We tried to login, but there was a fatal error. Report it back
+    // to the user.
+    throw result;
+  else {
+    if (!_.contains(Accounts.oauth.serviceNames(), result.serviceName)) {
+      // serviceName was not found in the registered services list.
+      // This could happen because the service never registered itself or
+      // unregisterService was called on it.
+      return { type: "oauth",
+               error: new Meteor.Error(
+                 Accounts.LoginCancelledError.numericError,
+                 "No registered oauth service found for: " + result.serviceName) };
+
+    }
+    return Accounts.updateOrCreateUserFromExternalService(result.serviceName, result.serviceData, result.options);
+  }
+});
+
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 }).call(this);
@@ -120,5 +144,3 @@ if (typeof Package === 'undefined') Package = {};
 Package['accounts-oauth'] = {};
 
 })();
-
-//# sourceMappingURL=accounts-oauth.js.map

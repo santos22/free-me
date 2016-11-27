@@ -2,15 +2,8 @@
 //                                                                      //
 // This is a generated file. You can view the original                  //
 // source in your browser if your browser supports source maps.         //
-//                                                                      //
-// If you are using Chrome, open the Developer Tools and click the gear //
-// icon in its lower right corner. In the General Settings panel, turn  //
-// on 'Enable source maps'.                                             //
-//                                                                      //
-// If you are using Firefox 23, go to `about:config` and set the        //
-// `devtools.debugger.source-maps-enabled` preference to true.          //
-// (The preference should be on by default in Firefox 24; versions      //
-// older than 23 do not support source maps.)                           //
+// Source maps are supported by all recent versions of Chrome, Safari,  //
+// and Firefox, and by Internet Explorer 11.                            //
 //                                                                      //
 //////////////////////////////////////////////////////////////////////////
 
@@ -19,6 +12,11 @@
 
 /* Imports */
 var Meteor = Package.meteor.Meteor;
+var global = Package.meteor.global;
+var meteorEnv = Package.meteor.meteorEnv;
+var check = Package.check.check;
+var Match = Package.check.Match;
+var _ = Package.underscore._;
 var Reload = Package.reload.Reload;
 var Base64 = Package.base64.Base64;
 var URL = Package.url.URL;
@@ -26,7 +24,7 @@ var URL = Package.url.URL;
 /* Package-scope variables */
 var OAuth, Oauth;
 
-(function () {
+(function(){
 
 //////////////////////////////////////////////////////////////////////////////////////////
 //                                                                                      //
@@ -74,7 +72,7 @@ OAuth._loginStyle = function (service, config, options) {                       
   return loginStyle;                                                                    // 38
 };                                                                                      // 39
                                                                                         // 40
-OAuth._stateParam = function (loginStyle, credentialToken) {                            // 41
+OAuth._stateParam = function (loginStyle, credentialToken, redirectUrl) {               // 41
   var state = {                                                                         // 42
     loginStyle: loginStyle,                                                             // 43
     credentialToken: credentialToken,                                                   // 44
@@ -82,7 +80,7 @@ OAuth._stateParam = function (loginStyle, credentialToken) {                    
   };                                                                                    // 46
                                                                                         // 47
   if (loginStyle === 'redirect')                                                        // 48
-    state.redirectUrl = '' + window.location;                                           // 49
+    state.redirectUrl = redirectUrl || ('' + window.location);                          // 49
                                                                                         // 50
   // Encode base64 as not all login services URI-encode the state                       // 51
   // parameter when they pass it back to us.                                            // 52
@@ -151,7 +149,7 @@ OAuth.launchLogin = function (options) {                                        
   if (options.loginStyle === 'popup') {                                                 // 115
     OAuth.showPopup(                                                                    // 116
       options.loginUrl,                                                                 // 117
-      _.bind(options.credentialRequestCompleteCallback, null, options.credentialToken), // 118
+      _.bind(options.credentialRequestCompleteCallback, null, options.credentialToken),
       options.popupOptions);                                                            // 119
   } else if (options.loginStyle === 'redirect') {                                       // 120
     OAuth.saveDataForRedirect(options.loginService, options.credentialToken);           // 121
@@ -209,7 +207,7 @@ OAuth._retrieveCredentialSecret = function (credentialToken) {                  
 
 
 
-(function () {
+(function(){
 
 //////////////////////////////////////////////////////////////////////////////////////////
 //                                                                                      //
@@ -275,10 +273,19 @@ var openCenteredPopup = function(url, width, height) {                          
                   ',left=' + left + ',top=' + top + ',scrollbars=yes');                 // 56
                                                                                         // 57
   var newwindow = window.open(url, 'Login', features);                                  // 58
-  if (newwindow.focus)                                                                  // 59
-    newwindow.focus();                                                                  // 60
-  return newwindow;                                                                     // 61
-};                                                                                      // 62
+                                                                                        // 59
+  if (typeof newwindow === 'undefined') {                                               // 60
+    // blocked by a popup blocker maybe?                                                // 61
+    var err = new Error("The login popup was blocked by the browser");                  // 62
+    err.attemptedUrl = url;                                                             // 63
+    throw err;                                                                          // 64
+  }                                                                                     // 65
+                                                                                        // 66
+  if (newwindow.focus)                                                                  // 67
+    newwindow.focus();                                                                  // 68
+                                                                                        // 69
+  return newwindow;                                                                     // 70
+};                                                                                      // 71
 //////////////////////////////////////////////////////////////////////////////////////////
 
 }).call(this);
@@ -288,7 +295,7 @@ var openCenteredPopup = function(url, width, height) {                          
 
 
 
-(function () {
+(function(){
 
 //////////////////////////////////////////////////////////////////////////////////////////
 //                                                                                      //
@@ -365,7 +372,7 @@ OAuth._redirectUri = function (serviceName, config, params, absoluteUrlOptions) 
 
 
 
-(function () {
+(function(){
 
 //////////////////////////////////////////////////////////////////////////////////////////
 //                                                                                      //
@@ -384,9 +391,12 @@ Oauth = OAuth;                                                                  
 
 /* Exports */
 if (typeof Package === 'undefined') Package = {};
-Package.oauth = {
+(function (pkg, symbols) {
+  for (var s in symbols)
+    (s in pkg) || (pkg[s] = symbols[s]);
+})(Package.oauth = {}, {
   OAuth: OAuth,
   Oauth: Oauth
-};
+});
 
 })();

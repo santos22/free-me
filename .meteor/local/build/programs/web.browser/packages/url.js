@@ -2,15 +2,8 @@
 //                                                                      //
 // This is a generated file. You can view the original                  //
 // source in your browser if your browser supports source maps.         //
-//                                                                      //
-// If you are using Chrome, open the Developer Tools and click the gear //
-// icon in its lower right corner. In the General Settings panel, turn  //
-// on 'Enable source maps'.                                             //
-//                                                                      //
-// If you are using Firefox 23, go to `about:config` and set the        //
-// `devtools.debugger.source-maps-enabled` preference to true.          //
-// (The preference should be on by default in Firefox 24; versions      //
-// older than 23 do not support source maps.)                           //
+// Source maps are supported by all recent versions of Chrome, Safari,  //
+// and Firefox, and by Internet Explorer 11.                            //
 //                                                                      //
 //////////////////////////////////////////////////////////////////////////
 
@@ -19,12 +12,14 @@
 
 /* Imports */
 var Meteor = Package.meteor.Meteor;
+var global = Package.meteor.global;
+var meteorEnv = Package.meteor.meteorEnv;
 var _ = Package.underscore._;
 
 /* Package-scope variables */
 var URL, buildUrl;
 
-(function () {
+(function(){
 
 /////////////////////////////////////////////////////////////////////////////////////
 //                                                                                 //
@@ -35,7 +30,7 @@ var URL, buildUrl;
 URL = {};                                                                          // 1
                                                                                    // 2
 var encodeString = function(str) {                                                 // 3
-  return encodeURIComponent(str).replace(/[!'()]/g, escape).replace(/\*/g, "%2A"); // 4
+  return encodeURIComponent(str).replace(/[!'()]/g, escape).replace(/\*/g, "%2A");
 };                                                                                 // 5
                                                                                    // 6
                                                                                    // 7
@@ -81,7 +76,7 @@ buildUrl = function(before_qmark, from_qmark, opt_query, opt_params) {          
 
 
 
-(function () {
+(function(){
 
 /////////////////////////////////////////////////////////////////////////////////////
 //                                                                                 //
@@ -101,8 +96,11 @@ URL._constructUrl = function (url, query, params) {                             
 
 /* Exports */
 if (typeof Package === 'undefined') Package = {};
-Package.url = {
+(function (pkg, symbols) {
+  for (var s in symbols)
+    (s in pkg) || (pkg[s] = symbols[s]);
+})(Package.url = {}, {
   URL: URL
-};
+});
 
 })();

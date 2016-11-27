@@ -2,15 +2,8 @@
 //                                                                      //
 // This is a generated file. You can view the original                  //
 // source in your browser if your browser supports source maps.         //
-//                                                                      //
-// If you are using Chrome, open the Developer Tools and click the gear //
-// icon in its lower right corner. In the General Settings panel, turn  //
-// on 'Enable source maps'.                                             //
-//                                                                      //
-// If you are using Firefox 23, go to `about:config` and set the        //
-// `devtools.debugger.source-maps-enabled` preference to true.          //
-// (The preference should be on by default in Firefox 24; versions      //
-// older than 23 do not support source maps.)                           //
+// Source maps are supported by all recent versions of Chrome, Safari,  //
+// and Firefox, and by Internet Explorer 11.                            //
 //                                                                      //
 //////////////////////////////////////////////////////////////////////////
 
@@ -19,14 +12,17 @@
 
 /* Imports */
 var Meteor = Package.meteor.Meteor;
+var global = Package.meteor.global;
+var meteorEnv = Package.meteor.meteorEnv;
 var _ = Package.underscore._;
-var Log = Package.logging.Log;
-var JSON = Package.json.JSON;
+var Symbol = Package['ecmascript-runtime'].Symbol;
+var Map = Package['ecmascript-runtime'].Map;
+var Set = Package['ecmascript-runtime'].Set;
 
 /* Package-scope variables */
 var Reload;
 
-(function () {
+(function(){
 
 /////////////////////////////////////////////////////////////////////////////////////////////
 //                                                                                         //
@@ -221,7 +217,7 @@ Reload._migrate = function (tryReload, options) {                               
       Meteor._debug("Couldn't save data for migration to sessionStorage", err);            // 185
     }                                                                                      // 186
   } else {                                                                                 // 187
-    Meteor._debug("Browser does not support sessionStorage. Not saving migration state."); // 188
+    Meteor._debug("Browser does not support sessionStorage. Not saving migration state.");
   }                                                                                        // 189
                                                                                            // 190
   return true;                                                                             // 191
@@ -254,14 +250,22 @@ Reload._reload = function (options) {                                           
                                                                                            // 218
   var tryReload = function () { _.defer(function () {                                      // 219
     if (Reload._migrate(tryReload, options)) {                                             // 220
-      // Tell the browser to shut down this VM and make a new one                          // 221
-      window.location.reload();                                                            // 222
-    }                                                                                      // 223
-  }); };                                                                                   // 224
-                                                                                           // 225
-  tryReload();                                                                             // 226
-};                                                                                         // 227
-                                                                                           // 228
+      // We'd like to make the browser reload the page using location.replace()            // 221
+      // instead of location.reload(), because this avoids validating assets               // 222
+      // with the server if we still have a valid cached copy. This doesn't work           // 223
+      // when the location contains a hash however, because that wouldn't reload           // 224
+      // the page and just scroll to the hash location instead.                            // 225
+      if (window.location.hash || window.location.href.endsWith("#")) {                    // 226
+        window.location.reload();                                                          // 227
+      } else {                                                                             // 228
+        window.location.replace(window.location.href);                                     // 229
+      }                                                                                    // 230
+    }                                                                                      // 231
+  }); };                                                                                   // 232
+                                                                                           // 233
+  tryReload();                                                                             // 234
+};                                                                                         // 235
+                                                                                           // 236
 /////////////////////////////////////////////////////////////////////////////////////////////
 
 }).call(this);
@@ -271,7 +275,7 @@ Reload._reload = function (options) {                                           
 
 
 
-(function () {
+(function(){
 
 /////////////////////////////////////////////////////////////////////////////////////////////
 //                                                                                         //
@@ -295,8 +299,11 @@ Meteor._reload = {                                                              
 
 /* Exports */
 if (typeof Package === 'undefined') Package = {};
-Package.reload = {
+(function (pkg, symbols) {
+  for (var s in symbols)
+    (s in pkg) || (pkg[s] = symbols[s]);
+})(Package.reload = {}, {
   Reload: Reload
-};
+});
 
 })();

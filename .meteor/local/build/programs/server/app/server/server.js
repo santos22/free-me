@@ -10,5 +10,4 @@
     Comments.insert(comment);
   }
 });
-
-})();
+}).call(this);
